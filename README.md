@@ -38,7 +38,7 @@ El panel solo se activa cuando conectas Supabase.
 - **Vídeos**: pega un enlace de **YouTube, Instagram o TikTok**, o sube un **MP4** (máx. 50 MB en el plan gratuito). Se pueden destacar.
 - **Fotos**: subida múltiple arrastrando, con categorías (filtros en la web). Se reducen solas a 2000 px.
 - **La banda**: integrantes con foto, nombre, instrumento y leyenda. Al pulsar su foto en la web se abre una ficha tipo cromo.
-- **Mensajes**: solicitudes del formulario de contratación.
+- **Mensajes**: solicitudes del formulario de contacto.
 - **Ajustes**: frase de portada, texto de la banda, email y redes sociales.
 
 **Consejo para vídeos:** para actuaciones largas o muchos vídeos, usa YouTube (gratis y sin límite de espacio). Los MP4 propios ocupan almacenamiento del plan.

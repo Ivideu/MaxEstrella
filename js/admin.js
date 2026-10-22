@@ -371,9 +371,9 @@
     });
   }
 
-  /* ---------- mensajes de contratación ---------- */
+  /* ---------- mensajes de contacto ---------- */
   async function inquiriesView() {
-    main.innerHTML = `<div class="top"><h2>Mensajes</h2></div><p class="hint">Solicitudes enviadas desde el formulario de contratación.</p><div id="l"><p class="empty">Cargando…</p></div>`;
+    main.innerHTML = `<div class="top"><h2>Mensajes</h2></div><p class="hint">Solicitudes enviadas desde el formulario de contacto.</p><div id="l"><p class="empty">Cargando…</p></div>`;
     const { data, error } = await sb.from("inquiries").select("*").order("created_at", { ascending: false }); if (error) return fail(error);
     const box = $("#l");
     if (!data.length) { box.innerHTML = `<p class="empty">No hay mensajes todavía.</p>`; return; }
@@ -382,7 +382,7 @@
       <div><div class="t">${esc(r.name)} <span class="tag">${esc(r.kind || "")}</span></div>
         <div class="s">${esc(fmtTs(r.created_at))} · <a href="mailto:${esc(r.email)}">${esc(r.email)}</a>${r.date_place ? " · " + esc(r.date_place) : ""}</div>
         <div class="s" style="white-space:pre-wrap;opacity:.9;margin-top:6px">${esc(r.message || "")}</div></div>
-      <div class="acts"><a class="btn ghost sm" href="mailto:${esc(r.email)}?subject=${encodeURIComponent("Re: Contratación Max Estrella")}">Responder</a><button class="btn danger sm" data-d="${r.id}">Borrar</button></div></div>`).join("");
+      <div class="acts"><a class="btn ghost sm" href="mailto:${esc(r.email)}?subject=${encodeURIComponent("Re: contacto Max Estrella")}">Responder</a><button class="btn danger sm" data-d="${r.id}">Borrar</button></div></div>`).join("");
     box.addEventListener("click", async (ev) => {
       const d = ev.target.closest("[data-d]"); if (!d) return;
       if (!confirm("¿Borrar este mensaje?")) return;

@@ -183,7 +183,7 @@ h2{font-family:var(--display);font-size:clamp(2.4rem,6.4vw,5rem);line-height:.95
 .mgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:18px}
 .cc.mc{aspect-ratio:3/4}
 
-/* ---------- CONTRATACION ---------- */
+/* ---------- contacto ---------- */
 .contact{display:grid;grid-template-columns:1fr 1.1fr;gap:clamp(30px,6vw,80px);align-items:start}
 .lead{font-size:1.15rem;max-width:42ch;margin:20px 0}
 .direct a{font-weight:600}

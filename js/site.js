@@ -335,7 +335,7 @@
       msg.textContent = "¡Mensaje enviado! Te responderemos muy pronto."; msg.classList.add("ok"); f.reset();
     } else {
       const body = `Nombre: ${d.name}\nEmail: ${d.email}\nTipo: ${d.kind}\nFecha y lugar: ${d.date_place}\n\n${d.message}`;
-      location.href = `mailto:${window.__mail || ""}?subject=${encodeURIComponent("Contratación Max Estrella")}&body=${encodeURIComponent(body)}`;
+      location.href = `mailto:${window.__mail || ""}?subject=${encodeURIComponent("contacto Max Estrella")}&body=${encodeURIComponent(body)}`;
       msg.textContent = "Se abrirá tu correo con el mensaje listo (modo demo)."; msg.classList.add("ok");
     }
   });
