@@ -1,0 +1,80 @@
+/* Capa de datos compartida por la web y el panel admin.
+   Con Supabase configurado lee/escribe en la nube; sin él, usa datos DEMO. */
+(function () {
+  const C = window.MAX_CONFIG || {};
+  const live = !!(C.SUPABASE_URL && C.SUPABASE_ANON_KEY && window.supabase);
+  const sb = live ? window.supabase.createClient(C.SUPABASE_URL, C.SUPABASE_ANON_KEY) : null;
+
+  const esc = (t) => String(t ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  const safeUrl = (u) => {
+    u = String(u || "").trim();
+    return /^(https?:\/\/|\/|images\/|\.\/)/i.test(u) ? u : "";
+  };
+
+  function parseVideo(url) {
+    url = (url || "").trim();
+    let m;
+    if ((m = url.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?(?:.*&)?v=|shorts\/|embed\/|live\/))([\w-]{11})/))) return { kind: "youtube", id: m[1] };
+    if ((m = url.match(/instagram\.com\/(?:[\w.]+\/)?(?:reel|reels|p|tv)\/([\w-]+)/))) return { kind: "instagram", id: m[1] };
+    if ((m = url.match(/tiktok\.com\/.*\/video\/(\d+)/))) return { kind: "tiktok", id: m[1] };
+    if (/\.(mp4|webm|mov|m4v)(\?|$)/i.test(url) || url.includes("/storage/v1/object/public/")) return { kind: "mp4" };
+    return { kind: url ? "link" : "demo" };
+  }
+
+  /* ---------- DATOS DEMO (se ven mientras no haya Supabase) ---------- */
+  const year = new Date().getFullYear();
+  const DEMO = {
+    events: [
+      { id: "d1", date: `${year + (new Date().getMonth() > 10 ? 1 : 0)}-11-14`, title: "Max Estrella en directo", venue: "Sala Fun House", city: "Madrid · C. Palafox, 8", ticket_url: "" },
+      { id: "d2", date: `${year + 1}-01-23`, title: "Gira de invierno", venue: "Sala por confirmar", city: "Madrid", ticket_url: "" }
+    ],
+    news: [
+      { id: "n1", title: "Bienvenidos a la nueva web de Max Estrella", body: "Aquí iremos publicando conciertos, vídeos, fotos y todas las novedades del grupo.\n\nEsta noticia es de ejemplo: desde el panel de administración podréis escribir las vuestras, con foto y todo.", image_url: "images/cartel.jpg", published_at: new Date().toISOString() },
+      { id: "n2", title: "Nuevo directo en la Sala Fun House", body: "Una noche de rock con las canciones que duelen y las que emocionan. Noticia de ejemplo.", image_url: "", published_at: new Date(Date.now() - 864e5 * 6).toISOString() }
+    ],
+    videos: [1, 2, 3, 4, 5].map((n) => ({ id: "v" + n, title: `Vídeo ${n} · pendiente de añadir`, url: "", featured: n === 1 })),
+    photos: [
+      { id: "p0", url: "images/cartel.jpg", caption: "Cartel · Sala Fun House", category: "Cartel" },
+      { id: "p1", url: "images/members/m2.jpg", caption: "Voz y guitarra", category: "Banda" },
+      { id: "p2", url: "images/members/m4.jpg", caption: "Guitarra", category: "Banda" },
+      { id: "p3", url: "images/members/m1.jpg", caption: "Batería", category: "Banda" },
+      { id: "p4", url: "images/members/m5.jpg", caption: "Teclados", category: "Banda" },
+      { id: "p5", url: "images/members/m3.jpg", caption: "Bajo", category: "Banda" }
+    ],
+    members: [
+      { id: "m2", name: "Voz y guitarra", role: "Edita el nombre desde el panel", photo_url: "images/members/m2.jpg" },
+      { id: "m1", name: "Batería", role: "Edita el nombre desde el panel", photo_url: "images/members/m1.jpg" },
+      { id: "m3", name: "Bajo", role: "Edita el nombre desde el panel", photo_url: "images/members/m3.jpg" },
+      { id: "m4", name: "Guitarra", role: "Edita el nombre desde el panel", photo_url: "images/members/m4.jpg" },
+      { id: "m5", name: "Teclados", role: "Edita el nombre desde el panel", photo_url: "images/members/m5.jpg" }
+    ],
+    settings: {
+      hero_tagline: "Canciones que duelen. Canciones que emocionan.",
+      bio: "Max Estrella nace de la necesidad de contar lo que a veces no se dice: la soledad, la depresión que no avisa, el dolor que se convierte en canción.",
+      contact_email: C.CONTACT_EMAIL || "",
+      instagram: "https://www.instagram.com/max.estrella/"
+    }
+  };
+
+  async function get(table) {
+    if (!live) return DEMO[table] || [];
+    let q = sb.from(table).select("*");
+    if (table === "events") q = q.order("date", { ascending: true });
+    else if (table === "news") q = q.eq("published", true).order("published_at", { ascending: false });
+    else if (table === "videos") q = q.order("featured", { ascending: false }).order("created_at", { ascending: false });
+    else if (table === "photos") q = q.order("sort", { ascending: true }).order("created_at", { ascending: false });
+    else if (table === "members") q = q.order("sort", { ascending: true });
+    const { data, error } = await q;
+    if (error) { console.error("Supabase", table, error); return []; }
+    return data || [];
+  }
+
+  async function settings() {
+    if (!live) return DEMO.settings;
+    const { data, error } = await sb.from("settings").select("*");
+    if (error) { console.error(error); return {}; }
+    return Object.fromEntries((data || []).map((r) => [r.key, r.value]));
+  }
+
+  window.MAX = { live, sb, config: C, esc, safeUrl, parseVideo, get, settings, DEMO };
+})();
