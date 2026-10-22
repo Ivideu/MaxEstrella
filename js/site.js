@@ -55,51 +55,151 @@
     pw.addEventListener("mouseleave", () => { poster.style.setProperty("--ry", "0deg"); poster.style.setProperty("--rx", "0deg"); });
   }
 
-  /* ---------- ventanas ---------- */
-  const modal = $("#modal"), mbody = $("#modal-body"), lb = $("#lb");
+  /* ---------- ventanas + ficha tipo cromo (común a todo) ---------- */
+  const modal = $("#modal"), mbody = $("#modal-body");
+  const pad = (x) => String(x).padStart(2, "0");
+  const CUR = { k: null, i: 0 };
+  const LIST = { m: () => MEM, p: () => phView, v: () => VIDS, n: () => NEWS, u: () => UP, e: () => PAST };
   function closeAll() {
-    modal.hidden = true; mbody.innerHTML = ""; lb.hidden = true;
+    modal.hidden = true; mbody.innerHTML = ""; CUR.k = null;
     if (!nav.classList.contains("open")) document.body.style.overflow = "";
   }
-  modal.addEventListener("click", (e) => { if (e.target === modal || e.target.closest(".modal-x")) closeAll(); });
-  lb.addEventListener("click", (e) => { if (e.target === lb || e.target.closest(".modal-x")) closeAll(); });
+  function openModal(html) { mbody.innerHTML = html; modal.hidden = false; document.body.style.overflow = "hidden"; }
+  modal.addEventListener("click", (e) => {
+    if (e.target === modal || e.target === mbody || e.target.classList.contains("cromo-wrap") || e.target.closest(".modal-x")) return closeAll();
+    const b = e.target.closest("[data-cr]");
+    if (b && CUR.k) openCromo(CUR.k, CUR.i + Number(b.dataset.cr));
+  });
   addEventListener("keydown", (e) => {
     if (e.key === "Escape") closeAll();
-    if (!lb.hidden) { if (e.key === "ArrowRight") step(1); if (e.key === "ArrowLeft") step(-1); }
-    if (!modal.hidden && $("#cromo")) { if (e.key === "ArrowRight") openMember(mi + 1); if (e.key === "ArrowLeft") openMember(mi - 1); }
+    if (!modal.hidden && CUR.k) {
+      if (e.key === "ArrowRight") openCromo(CUR.k, CUR.i + 1);
+      if (e.key === "ArrowLeft") openCromo(CUR.k, CUR.i - 1);
+    }
   });
-  function openModal(html) { mbody.innerHTML = html; modal.hidden = false; document.body.style.overflow = "hidden"; }
+  let tx = 0;
+  modal.addEventListener("touchstart", (e) => { tx = e.changedTouches[0].clientX; }, { passive: true });
+  modal.addEventListener("touchend", (e) => {
+    if (!CUR.k) return;
+    const dx = e.changedTouches[0].clientX - tx;
+    if (Math.abs(dx) > 60) openCromo(CUR.k, CUR.i + (dx < 0 ? 1 : -1));
+  });
+  function tilt(c, amt) {
+    if (reduce || !matchMedia("(hover:hover)").matches) return;
+    c.addEventListener("mousemove", (e) => {
+      const r = c.getBoundingClientRect(), x = (e.clientX - r.left) / r.width - 0.5, y = (e.clientY - r.top) / r.height - 0.5;
+      c.style.setProperty("--ry", (x * amt).toFixed(1) + "deg"); c.style.setProperty("--rx", (-y * amt).toFixed(1) + "deg");
+      c.style.setProperty("--sx", (130 - (x + 0.5) * 160).toFixed(0) + "%");
+    });
+    c.addEventListener("mouseleave", () => { c.style.setProperty("--ry", "0deg"); c.style.setProperty("--rx", "0deg"); });
+  }
+
+  const STAR = '<i class="cr-star">★</i>';
+  const frame = (top, media, cap) => `<div class="cr-top"><span>Max ★ Estrella</span><span>${top}</span></div>${media}<div class="cr-cap">${cap}</div>`;
+  const fmtDate = (iso) => new Date(iso).toLocaleDateString("es-ES", { day: "numeric", month: "long", year: "numeric" });
+  const cap1 = (s) => s.charAt(0).toUpperCase() + s.slice(1);
+
+  function fichaEvento(ev, i, n, past) {
+    const { y, m, d, wd } = evParts(ev), tk = past ? "" : safe(ev.ticket_url);
+    const rows = [["Sala", ev.venue], ["Ubicación", ev.city]].filter((r) => r[1]);
+    const media = `<div class="cr-date"><span class="wd">${esc(wd)}</span><b>${d}</b><span class="mo">${MONTHS[m - 1]} ${y}</span>${past ? '<em class="stamp">Finalizado</em>' : ""}</div>`;
+    const cap = `<h3>${esc(ev.title)}</h3>${past ? '<p class="cr-role">Concierto ya celebrado</p>' : ""}
+      ${rows.length ? `<ul class="cr-info">${rows.map((r) => `<li><small>${r[0]}</small><span>${esc(r[1])}</span></li>`).join("")}</ul>` : ""}
+      ${ev.note ? `<p class="cr-bio">${esc(ev.note)}</p>` : ""}
+      ${tk ? `<a class="btn sm" href="${esc(tk)}" target="_blank" rel="noopener">Comprar entradas</a>` : ""}`;
+    return { cls: "ficha" + (past ? " past" : ""), tilt: 12, html: frame(past ? "Directo · pasado" : "Directo · " + pad(i + 1) + "/" + pad(n), media, cap) };
+  }
+
+  const BUILD = {
+    m(m, i, n) {
+      return { cls: "", tilt: 16, html: frame(`Nº ${pad(i + 1)} / ${pad(n)}`,
+        `<div class="cr-photo"><img src="${esc(safe(m.photo_url) || "images/cartel.jpg")}" alt="${esc(m.name)}">${STAR}</div>`,
+        `<h3>${esc(m.name)}</h3>${m.role ? `<p class="cr-role">${esc(m.role)}</p>` : ""}${m.bio ? `<p class="cr-bio">${esc(m.bio)}</p>` : ""}`) };
+    },
+    p(p, i, n) {
+      return { cls: "foto", tilt: 10, html: frame(`Foto ${pad(i + 1)} / ${pad(n)}`,
+        `<div class="cr-photo free"><img src="${esc(safe(p.url))}" alt="${esc(p.caption || "Foto de Max Estrella")}">${STAR}</div>`,
+        `${p.caption ? `<h3>${esc(p.caption)}</h3>` : ""}${p.category ? `<p class="cr-role">${esc(p.category)}</p>` : ""}`) };
+    },
+    v(v, i, n) {
+      const p = parseVideo(v.url), t = esc(v.title || "Vídeo"), u = esc(safe(v.url));
+      let cls = "wide", media, extra = "";
+      if (p.kind === "youtube") media = `<div class="cr-photo cr-video"><iframe src="https://www.youtube-nocookie.com/embed/${p.id}?autoplay=1&rel=0" title="${t}" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe></div>`;
+      else if (p.kind === "instagram") { cls = "tall"; media = `<div class="cr-photo cr-video"><iframe src="https://www.instagram.com/reel/${p.id}/embed" title="${t}" allow="autoplay; encrypted-media; fullscreen" allowfullscreen></iframe></div>`; }
+      else if (p.kind === "tiktok") { cls = "tall"; media = `<div class="cr-photo cr-video"><iframe src="https://www.tiktok.com/embed/v2/${p.id}" title="${t}" allow="autoplay; encrypted-media; fullscreen" allowfullscreen></iframe></div>`; }
+      else if (p.kind === "mp4") media = `<div class="cr-photo free"><video src="${u}" controls autoplay playsinline></video></div>`;
+      else {
+        media = `<div class="cr-photo cr-video">${vThumb(v, p)}${STAR}</div>`;
+        extra = p.kind === "link" && u ? `<a class="btn sm" href="${u}" target="_blank" rel="noopener">Abrir enlace</a>` : `<p class="cr-bio">Vídeo de ejemplo: añade el tuyo desde el panel de administración.</p>`;
+      }
+      return { cls, tilt: 6, html: frame(`Vídeo ${pad(i + 1)} / ${pad(n)}`, media, `<h3>${esc(v.title || "")}</h3><p class="cr-role">${PLAT[p.kind]}</p>${extra}`) };
+    },
+    n(nw, i, n) {
+      const img = nw.image_url && safe(nw.image_url);
+      return { cls: "noti", tilt: 8, html: frame(esc(fmtDate(nw.published_at)),
+        img ? `<div class="cr-photo news"><img src="${esc(img)}" alt="">${STAR}</div>` : "",
+        `<h3>${esc(nw.title)}</h3><div class="cr-text">${esc(nw.body || "")}</div>`) };
+    },
+    u: (ev, i, n) => fichaEvento(ev, i, n, false),
+    e: (ev, i, n) => fichaEvento(ev, i, n, true)
+  };
+
+  function openCromo(k, i) {
+    const L = LIST[k](); if (!L.length) return;
+    const idx = (i + L.length) % L.length;
+    CUR.k = k; CUR.i = idx;
+    const b = BUILD[k](L[idx], idx, L.length);
+    openModal(`<div class="cromo-wrap">
+      <div class="cromo ${b.cls}" id="cromo">${b.html}</div>
+      ${L.length > 1 ? `<div class="cr-nav"><button data-cr="-1" aria-label="Anterior">‹</button><span>${pad(idx + 1)} / ${pad(L.length)}</span><button data-cr="1" aria-label="Siguiente">›</button></div>` : ""}
+    </div>`);
+    tilt($("#cromo"), b.tilt);
+  }
 
   /* ---------- conciertos ---------- */
-  function evHTML(e, past) {
+  function evParts(e) {
     const [y, m, d] = e.date.split("-").map(Number);
-    const wd = new Date(y, m - 1, d).toLocaleDateString("es-ES", { weekday: "long" });
+    return { y, m, d, wd: cap1(new Date(y, m - 1, d).toLocaleDateString("es-ES", { weekday: "long" })) };
+  }
+  function evHTML(e, past, i) {
+    const { y, m, d, wd } = evParts(e);
     const place = [e.venue, e.city].filter(Boolean).join(" · ");
     const tk = past ? "" : safe(e.ticket_url);
-    return `<li class="event${past ? " past" : ""} reveal">
+    return `<li class="event${past ? " past" : ""} reveal" data-g="${past ? "e" : "u"}" data-i="${i}" role="button" tabindex="0" aria-label="Ver ficha: ${esc(e.title)}">
       <div class="ev-date"><b>${d}</b><span>${MONTHS[m - 1]} ${y}</span></div>
       <div class="ev-info"><small>${esc(wd)}</small><h3>${esc(e.title)}</h3><p>${esc(place)}</p>${e.note ? `<p class="ev-note">${esc(e.note)}</p>` : ""}</div>
-      ${tk ? `<a class="btn sm" href="${esc(tk)}" target="_blank" rel="noopener">Entradas</a>` : ""}
+      <div class="ev-act">${tk ? `<a class="btn sm" href="${esc(tk)}" target="_blank" rel="noopener">Entradas</a>` : ""}${past ? '<span class="ev-stamp">Finalizado</span>' : '<span class="ev-tag">Ver ficha +</span>'}</div>
     </li>`;
   }
-  let PAST = [], pastShown = 0;
+  let UP = [], PAST = [], pastShown = 0;
   function morePast() {
     const s = PAST.slice(pastShown, pastShown + 4);
-    $("#past").insertAdjacentHTML("beforeend", s.map((e) => evHTML(e, true)).join(""));
+    $("#past").insertAdjacentHTML("beforeend", s.map((e, k) => evHTML(e, true, pastShown + k)).join(""));
     pastShown += s.length;
     $("#past-more").hidden = pastShown >= PAST.length;
     reveal($("#past"));
   }
   $("#past-more").addEventListener("click", morePast);
+  function evOpen(e) {
+    const li = e.target.closest("li.event");
+    if (!li || e.target.closest("a")) return;
+    openCromo(li.dataset.g, +li.dataset.i);
+  }
+  for (const id of ["#events", "#past"]) {
+    $(id).addEventListener("click", evOpen);
+    $(id).addEventListener("keydown", (e) => {
+      if ((e.key === "Enter" || e.key === " ") && e.target.matches("li.event")) { e.preventDefault(); evOpen(e); }
+    });
+  }
   function renderEvents(events) {
     const today = localToday();
-    const up = events.filter((e) => e.date >= today).sort((a, b) => a.date.localeCompare(b.date));
+    UP = events.filter((e) => e.date >= today).sort((a, b) => a.date.localeCompare(b.date));
     PAST = events.filter((e) => e.date < today).sort((a, b) => b.date.localeCompare(a.date));
-    $("#events").innerHTML = up.map((e) => evHTML(e, false)).join("");
-    $("#events-empty").hidden = up.length > 0;
+    $("#events").innerHTML = UP.map((e, i) => evHTML(e, false, i)).join("");
+    $("#events-empty").hidden = UP.length > 0;
     const ns = $("#next-show");
-    if (up.length) {
-      const e = up[0], [y, m, d] = e.date.split("-").map(Number);
+    if (UP.length) {
+      const e = UP[0], { m, d } = evParts(e);
       ns.innerHTML = `<b>Próximo directo</b> ${d} ${MONTHS[m - 1]} · ${esc(e.venue || e.title)} →`;
       ns.hidden = false;
     }
@@ -110,7 +210,7 @@
   /* ---------- vídeos ---------- */
   const PLAT = { youtube: "YouTube", instagram: "Instagram", tiktok: "TikTok", mp4: "Vídeo", link: "Enlace", demo: "Próximamente" };
   let VIDS = [], vShown = 0;
-  const VPAGE = 7;
+  const VPAGE = 6;
   function vThumb(v, p) {
     if (v.poster_url && safe(v.poster_url)) return `<img src="${esc(safe(v.poster_url))}" alt="" loading="lazy">`;
     if (p.kind === "youtube") return `<img src="https://i.ytimg.com/vi/${p.id}/hqdefault.jpg" alt="" loading="lazy">`;
@@ -119,31 +219,22 @@
   }
   function renderVideos() {
     const g = $("#vgrid");
-    const slice = VIDS.slice(vShown, vShown + (vShown === 0 ? VPAGE : 6));
+    const slice = VIDS.slice(vShown, vShown + VPAGE);
     g.insertAdjacentHTML("beforeend", slice.map((v, k) => {
       const i = vShown + k, p = parseVideo(v.url);
-      return `<button class="vcard reveal${i === 0 && VIDS.length > 2 ? " big" : ""}" data-v="${i}" aria-label="Reproducir: ${esc(v.title || "vídeo")}">
+      return `<button class="cc vc reveal" data-i="${i}" aria-label="Ver vídeo: ${esc(v.title || "vídeo")}">
         <div class="vt">${vThumb(v, p)}</div>
-        <span class="vplay"><svg viewBox="0 0 24 24" width="26" height="26"><path d="M8 5v14l11-7z" fill="currentColor"/></svg></span>
-        <div class="vmeta"><em>${PLAT[p.kind]}</em><strong>${esc(v.title || "")}</strong></div>
+        ${v.featured ? '<i class="cc-star" title="Destacado">★</i>' : ""}
+        <span class="mhint">Ver vídeo</span>
+        <span class="vplay"><svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true"><path d="M8 5v14l11-7z" fill="currentColor"/></svg></span>
+        <div class="cc-meta"><h3>${esc(v.title || "")}</h3><p class="cc-pill">${PLAT[p.kind]}</p></div>
       </button>`;
     }).join(""));
     vShown += slice.length;
     $("#vmore").hidden = vShown >= VIDS.length;
     reveal(g);
   }
-  $("#vgrid").addEventListener("click", (e) => {
-    const b = e.target.closest(".vcard"); if (!b) return;
-    const v = VIDS[+b.dataset.v], p = parseVideo(v.url);
-    if (p.kind === "demo") return toast("Vídeo de ejemplo: añade el tuyo desde el panel de administración.");
-    if (p.kind === "link") return window.open(safe(v.url) || "#", "_blank", "noopener");
-    let html;
-    if (p.kind === "youtube") html = `<div class="vframe"><iframe src="https://www.youtube-nocookie.com/embed/${p.id}?autoplay=1&rel=0" title="${esc(v.title || "Vídeo")}" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe></div>`;
-    else if (p.kind === "instagram") html = `<div class="vframe tall"><iframe src="https://www.instagram.com/reel/${p.id}/embed" title="${esc(v.title || "Reel")}" allow="autoplay; encrypted-media; fullscreen" allowfullscreen></iframe></div>`;
-    else if (p.kind === "tiktok") html = `<div class="vframe tall"><iframe src="https://www.tiktok.com/embed/v2/${p.id}" title="${esc(v.title || "TikTok")}" allow="autoplay; encrypted-media; fullscreen" allowfullscreen></iframe></div>`;
-    else html = `<div class="vframe free"><video src="${esc(safe(v.url))}" controls autoplay playsinline></video></div>`;
-    openModal(html);
-  });
+  $("#vgrid").addEventListener("click", (e) => { const b = e.target.closest(".cc"); if (b) openCromo("v", +b.dataset.i); });
   $("#vmore").addEventListener("click", renderVideos);
 
   /* ---------- fotos ---------- */
@@ -161,8 +252,14 @@
   }
   function morePhotos() {
     const slice = phView.slice(phShown, phShown + PPAGE);
-    $("#masonry").insertAdjacentHTML("beforeend", slice.map((p, k) =>
-      `<button class="ph reveal" data-p="${phShown + k}" aria-label="Ampliar foto${p.caption ? ": " + esc(p.caption) : ""}"><img src="${esc(safe(p.url))}" alt="${esc(p.caption || "Foto de Max Estrella")}" loading="lazy">${p.caption ? `<span>${esc(p.caption)}</span>` : ""}</button>`).join(""));
+    $("#masonry").insertAdjacentHTML("beforeend", slice.map((p, k) => {
+      const meta = p.caption || p.category;
+      return `<button class="cc ph${meta ? "" : " nometa"} reveal" data-i="${phShown + k}" aria-label="Ver foto${p.caption ? ": " + esc(p.caption) : ""}">
+        <img src="${esc(safe(p.url))}" alt="${esc(p.caption || "Foto de Max Estrella")}" loading="lazy">
+        <span class="mhint">Ver foto</span>
+        ${meta ? `<div class="cc-meta">${p.caption ? `<h3>${esc(p.caption)}</h3>` : ""}${p.category ? `<p class="cc-pill">${esc(p.category)}</p>` : ""}</div>` : ""}
+      </button>`;
+    }).join(""));
     phShown += slice.length;
     $("#pmore").hidden = phShown >= phView.length;
     reveal($("#masonry"));
@@ -172,35 +269,20 @@
     phCat = b.dataset.c; renderChips(); resetPhotos();
   });
   $("#pmore").addEventListener("click", morePhotos);
-  let cur = 0;
-  function show(i) {
-    cur = (i + phView.length) % phView.length;
-    const p = phView[cur];
-    $("#lb-img").src = safe(p.url); $("#lb-img").alt = p.caption || "";
-    $("#lb-cap").textContent = p.caption || "";
-  }
-  function step(d) { show(cur + d); }
-  $("#masonry").addEventListener("click", (e) => {
-    const b = e.target.closest(".ph"); if (!b) return;
-    show(+b.dataset.p); lb.hidden = false; document.body.style.overflow = "hidden";
-  });
-  $(".lb-nav.prev").addEventListener("click", (e) => { e.stopPropagation(); step(-1); });
-  $(".lb-nav.next").addEventListener("click", (e) => { e.stopPropagation(); step(1); });
-  let tx = 0;
-  lb.addEventListener("touchstart", (e) => { tx = e.changedTouches[0].clientX; }, { passive: true });
-  lb.addEventListener("touchend", (e) => { const dx = e.changedTouches[0].clientX - tx; if (Math.abs(dx) > 50) step(dx < 0 ? 1 : -1); });
+  $("#masonry").addEventListener("click", (e) => { const b = e.target.closest(".cc"); if (b) openCromo("p", +b.dataset.i); });
 
   /* ---------- noticias ---------- */
   let NEWS = [], nShown = 0;
-  const fmtDate = (iso) => new Date(iso).toLocaleDateString("es-ES", { day: "numeric", month: "long", year: "numeric" });
   function renderNews() {
     const g = $("#ngrid");
     const slice = NEWS.slice(nShown, nShown + 6);
     g.insertAdjacentHTML("beforeend", slice.map((n, k) => {
       const ex = (n.body || "").replace(/\s+/g, " ").slice(0, 130);
-      return `<button class="ncard reveal" data-n="${nShown + k}">
-        <div class="ni">${n.image_url && safe(n.image_url) ? `<img src="${esc(safe(n.image_url))}" alt="" loading="lazy">` : "★"}</div>
-        <div class="nb"><time>${esc(fmtDate(n.published_at))}</time><h3>${esc(n.title)}</h3><p>${esc(ex)}${(n.body || "").length > 130 ? "…" : ""}</p><span class="rm">Leer más →</span></div>
+      const img = n.image_url && safe(n.image_url);
+      return `<button class="cc nc reveal" data-i="${nShown + k}" aria-label="Leer noticia: ${esc(n.title)}">
+        <div class="vt">${img ? `<img src="${esc(img)}" alt="" loading="lazy">` : '<div class="nc-ph">★</div>'}</div>
+        <span class="mhint">Leer</span>
+        <div class="cc-meta"><h3>${esc(n.title)}</h3>${ex ? `<p class="nc-ex">${esc(ex)}${(n.body || "").length > 130 ? "…" : ""}</p>` : ""}<p class="cc-pill">${esc(fmtDate(n.published_at))}</p></div>
       </button>`;
     }).join(""));
     nShown += slice.length;
@@ -208,51 +290,33 @@
     $("#news-empty").hidden = NEWS.length > 0;
     reveal(g);
   }
-  $("#ngrid").addEventListener("click", (e) => {
-    const b = e.target.closest(".ncard"); if (!b) return;
-    const n = NEWS[+b.dataset.n];
-    openModal(`<article class="article">${n.image_url && safe(n.image_url) ? `<img src="${esc(safe(n.image_url))}" alt="">` : ""}<div class="ab"><time>${esc(fmtDate(n.published_at))}</time><h3>${esc(n.title)}</h3><div class="txt">${esc(n.body || "")}</div></div></article>`);
-  });
+  $("#ngrid").addEventListener("click", (e) => { const b = e.target.closest(".cc"); if (b) openCromo("n", +b.dataset.i); });
   $("#nmore").addEventListener("click", renderNews);
 
-  /* ---------- banda (fichas tipo cromo) ---------- */
-  let MEM = [], mi = 0;
+  /* ---------- banda ---------- */
+  let MEM = [];
   function renderMembers(ms) {
     MEM = ms;
-    $("#mgrid").innerHTML = ms.map((m, i) => `<button class="mcard reveal" data-m="${i}" aria-label="Ver la ficha de ${esc(m.name)}"><img src="${esc(safe(m.photo_url) || "images/cartel.jpg")}" alt="${esc(m.name)}" loading="lazy"><span class="mhint">Ver ficha</span><div><h3>${esc(m.name)}</h3>${m.role ? `<p>${esc(m.role)}</p>` : ""}</div></button>`).join("");
+    $("#mgrid").innerHTML = ms.map((m, i) => `<button class="cc mc reveal" data-i="${i}" aria-label="Ver la ficha de ${esc(m.name)}"><img src="${esc(safe(m.photo_url) || "images/cartel.jpg")}" alt="${esc(m.name)}" loading="lazy"><span class="mhint">Ver ficha</span><div class="cc-meta"><h3>${esc(m.name)}</h3>${m.role ? `<p class="cc-pill">${esc(m.role)}</p>` : ""}</div></button>`).join("");
   }
-  function openMember(i) {
-    if (!MEM.length) return;
-    mi = (i + MEM.length) % MEM.length;
-    const m = MEM[mi], n = (x) => String(x).padStart(2, "0");
-    openModal(`<div class="cromo-wrap">
-      <div class="cromo" id="cromo">
-        <div class="cr-top"><span>Max ★ Estrella</span><span>Nº ${n(mi + 1)} / ${n(MEM.length)}</span></div>
-        <div class="cr-photo"><img src="${esc(safe(m.photo_url) || "images/cartel.jpg")}" alt="${esc(m.name)}"><i class="cr-star">★</i></div>
-        <div class="cr-cap"><h3>${esc(m.name)}</h3>${m.role ? `<p class="cr-role">${esc(m.role)}</p>` : ""}${m.bio ? `<p class="cr-bio">${esc(m.bio)}</p>` : ""}</div>
-      </div>
-      ${MEM.length > 1 ? `<div class="cr-nav"><button data-cr="-1" aria-label="Anterior">‹</button><span>${n(mi + 1)} / ${n(MEM.length)}</span><button data-cr="1" aria-label="Siguiente">›</button></div>` : ""}
-    </div>`);
-    const c = $("#cromo");
-    if (!reduce && matchMedia("(hover:hover)").matches) {
-      c.addEventListener("mousemove", (e) => {
-        const r = c.getBoundingClientRect(), x = (e.clientX - r.left) / r.width - 0.5, y = (e.clientY - r.top) / r.height - 0.5;
-        c.style.setProperty("--ry", (x * 16).toFixed(1) + "deg"); c.style.setProperty("--rx", (-y * 16).toFixed(1) + "deg");
-        c.style.setProperty("--sx", (130 - (x + 0.5) * 160).toFixed(0) + "%");
-      });
-      c.addEventListener("mouseleave", () => { c.style.setProperty("--ry", "0deg"); c.style.setProperty("--rx", "0deg"); });
-    }
-  }
-  $("#mgrid").addEventListener("click", (e) => { const b = e.target.closest(".mcard"); if (b) openMember(+b.dataset.m); });
-  modal.addEventListener("click", (e) => { const b = e.target.closest("[data-cr]"); if (b) openMember(mi + Number(b.dataset.cr)); });
+  $("#mgrid").addEventListener("click", (e) => { const b = e.target.closest(".cc"); if (b) openCromo("m", +b.dataset.i); });
 
   /* ---------- contacto / redes ---------- */
+  const ICON = {
+    instagram: '<rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.2" cy="6.8" r=".7" fill="currentColor"/>',
+    youtube: '<rect x="2.5" y="5.5" width="19" height="13" rx="4"/><path d="M10 9.4v5.2l4.4-2.6z" fill="currentColor"/>',
+    tiktok: '<path d="M14 3v11.2a3.6 3.6 0 1 1-3.6-3.6"/><path d="M14 3c.3 2.5 1.9 4.1 4.5 4.3"/>',
+    facebook: '<path d="M14.5 21v-8h2.6l.4-3h-3V8.1c0-.9.3-1.5 1.6-1.5h1.5V3.9c-.3 0-1.2-.1-2.2-.1-2.3 0-3.800 1.400-3.800 3.900V10H8.500v3h2.600v8z"/>',
+    spotify: '<circle cx="12" cy="12" r="9"/><path d="M7 9.6c3.6-1 7.200-.7 10.200 1.100M7.700 12.900c2.900-.8 5.700-.5 8.100 1M8.400 15.900c2.200-.6 4.300-.4 6.200.7"/>'
+  };
   const SOCIAL = { instagram: "Instagram", youtube: "YouTube", tiktok: "TikTok", facebook: "Facebook", spotify: "Spotify" };
   function renderSettings(S) {
     if (S.hero_tagline) $("#tagline").textContent = S.hero_tagline;
     $("#bio").textContent = S.bio || "";
     const links = Object.keys(SOCIAL).filter((k) => safe(S[k])).map((k) => `<a href="${esc(safe(S[k]))}" target="_blank" rel="noopener">${SOCIAL[k]}</a>`).join("");
-    $("#social").innerHTML = links; $("#social-top").innerHTML = links; $("#social-foot").innerHTML = links;
+    $("#social").innerHTML = links; $("#social-foot").innerHTML = links;
+    const icons = Object.keys(SOCIAL).filter((k) => safe(S[k])).map((k) => `<a href="${esc(safe(S[k]))}" target="_blank" rel="noopener" aria-label="${SOCIAL[k]}" title="${SOCIAL[k]}"><svg viewBox="0 0 24 24" aria-hidden="true">${ICON[k]}</svg></a>`).join("");
+    $("#social-nav").innerHTML = icons; $("#social-nav").hidden = !icons;
     const mail = S.contact_email || M.config.CONTACT_EMAIL;
     if (mail) { $("#direct-mail").hidden = false; const a = $("#mail-link"); a.textContent = mail; a.href = "mailto:" + mail; }
     window.__mail = mail;
@@ -271,7 +335,7 @@
       msg.textContent = "¡Mensaje enviado! Te responderemos muy pronto."; msg.classList.add("ok"); f.reset();
     } else {
       const body = `Nombre: ${d.name}\nEmail: ${d.email}\nTipo: ${d.kind}\nFecha y lugar: ${d.date_place}\n\n${d.message}`;
-      location.href = `mailto:${window.__mail || ""}?subject=${encodeURIComponent("Contacto Max Estrella")}&body=${encodeURIComponent(body)}`;
+      location.href = `mailto:${window.__mail || ""}?subject=${encodeURIComponent("Contratación Max Estrella")}&body=${encodeURIComponent(body)}`;
       msg.textContent = "Se abrirá tu correo con el mensaje listo (modo demo)."; msg.classList.add("ok");
     }
   });
