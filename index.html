@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Max Estrella · Rock en directo desde Madrid</title>
+  <meta name="description" content="Max Estrella: banda de rock en directo de Madrid. Conciertos, música, vídeos y contratación.">
+  <meta property="og:title" content="Max Estrella · Rock en directo">
+  <meta property="og:description" content="Canciones que duelen, canciones que emocionan. Conciertos y contratación.">
+  <meta property="og:image" content="images/cartel-fun-house.jpg">
+  <meta property="og:type" content="website">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>★</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Alfa+Slab+One&family=Oswald:wght@300;400;600&family=Lora:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<header class="nav" id="top">
+  <a class="brand" href="#top">MAX <span class="star">★</span> ESTRELLA</a>
+  <button class="burger" aria-label="Abrir menú" aria-expanded="false"><span></span><span></span><span></span></button>
+  <nav id="menu">
+    <a href="#conciertos">Conciertos</a>
+    <a href="#musica">Música</a>
+    <a href="#galeria">Galería</a>
+    <a href="#banda">La banda</a>
+    <a href="#contratacion" class="cta">Contratación</a>
+  </nav>
+</header>
+
+<main>
+  <!-- HERO -->
+  <section class="hero">
+    <div class="hero-bg" aria-hidden="true"></div>
+    <div class="hero-content">
+      <p class="kicker">Rock en directo · Madrid</p>
+      <h1>MAX<span class="bigstar">★</span>ESTRELLA</h1>
+      <p class="tagline">Canciones que duelen. Canciones que emocionan.</p>
+      <div class="hero-actions">
+        <a class="btn" href="#conciertos">Próximos conciertos</a>
+        <a class="btn ghost" href="#musica">Escuchar</a>
+      </div>
+    </div>
+    <a class="scroll" href="#conciertos" aria-label="Bajar">↓</a>
+  </section>
+
+  <!-- CONCIERTOS -->
+  <section id="conciertos" class="section paper">
+    <div class="wrap">
+      <h2 class="title">Conciertos</h2>
+      <p class="lead">Fechas confirmadas. Si quieres a Max Estrella en tu sala, tu festival o tu evento privado, escríbenos.</p>
+      <ul class="events" id="events"></ul>
+      <p class="muted" id="events-empty" hidden>Pronto anunciaremos nuevas fechas.</p>
+    </div>
+  </section>
+
+  <!-- MUSICA -->
+  <section id="musica" class="section dark">
+    <div class="wrap">
+      <h2 class="title light">Música</h2>
+      <p class="lead light">Temas, letras y directos. Sustituye los enlaces por los tuyos en <code>js/data.js</code>.</p>
+      <div class="cards" id="tracks"></div>
+      <div class="platforms" id="platforms"></div>
+    </div>
+  </section>
+
+  <!-- GALERIA -->
+  <section id="galeria" class="section paper">
+    <div class="wrap">
+      <h2 class="title">Galería</h2>
+      <p class="lead">Del escenario al estudio.</p>
+      <div class="gallery" id="gallery"></div>
+    </div>
+  </section>
+
+  <!-- BANDA -->
+  <section id="banda" class="section red">
+    <div class="wrap narrow">
+      <h2 class="title light">La banda</h2>
+      <p class="big">Max Estrella nace de la necesidad de contar lo que a veces no se dice: la soledad, la depresión que no avisa, el dolor que se convierte en canción.</p>
+      <p>Guitarras, bajo, batería y teclados en un directo cercano y sin red. <em>Edita este texto con la historia real de la banda, sus integrantes y su trayectoria.</em></p>
+      <ul class="stats">
+        <li><strong>+XX</strong><span>conciertos</span></li>
+        <li><strong>X</strong><span>músicos en escena</span></li>
+        <li><strong>XX</strong><span>canciones propias</span></li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- CONTRATACION -->
+  <section id="contratacion" class="section paper">
+    <div class="wrap narrow">
+      <h2 class="title">Contratación</h2>
+      <p class="lead">Salas, festivales, fiestas y eventos privados. Cuéntanos fecha, lugar y tipo de evento y te responderemos.</p>
+      <form id="booking" class="form" novalidate>
+        <label>Nombre<input name="nombre" required autocomplete="name"></label>
+        <label>Email<input name="email" type="email" required autocomplete="email"></label>
+        <label>Tipo de evento
+          <select name="tipo">
+            <option>Sala / concierto</option>
+            <option>Festival</option>
+            <option>Fiesta o evento privado</option>
+            <option>Otro</option>
+          </select>
+        </label>
+        <label>Fecha y lugar<input name="fecha" placeholder="Ej. 15 de marzo, Madrid"></label>
+        <label class="full">Mensaje<textarea name="mensaje" rows="5"></textarea></label>
+        <button class="btn" type="submit">Enviar solicitud</button>
+        <p class="muted small full">Se abrirá tu programa de correo con el mensaje listo para enviar.</p>
+      </form>
+    </div>
+  </section>
+</main>
+
+<footer class="footer">
+  <p class="brand">MAX <span class="star">★</span> ESTRELLA</p>
+  <div class="social" id="social"></div>
+  <p class="small">© <span id="year"></span> Max Estrella · Todos los derechos reservados</p>
+</footer>
+
+<div class="lightbox" id="lightbox" hidden>
+  <button aria-label="Cerrar">×</button>
+  <img alt="">
+</div>
+
+<script src="js/data.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>
