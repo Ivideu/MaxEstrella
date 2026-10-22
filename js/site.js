@@ -66,23 +66,36 @@
   addEventListener("keydown", (e) => {
     if (e.key === "Escape") closeAll();
     if (!lb.hidden) { if (e.key === "ArrowRight") step(1); if (e.key === "ArrowLeft") step(-1); }
+    if (!modal.hidden && $("#cromo")) { if (e.key === "ArrowRight") openMember(mi + 1); if (e.key === "ArrowLeft") openMember(mi - 1); }
   });
   function openModal(html) { mbody.innerHTML = html; modal.hidden = false; document.body.style.overflow = "hidden"; }
 
   /* ---------- conciertos ---------- */
+  function evHTML(e, past) {
+    const [y, m, d] = e.date.split("-").map(Number);
+    const wd = new Date(y, m - 1, d).toLocaleDateString("es-ES", { weekday: "long" });
+    const place = [e.venue, e.city].filter(Boolean).join(" · ");
+    const tk = past ? "" : safe(e.ticket_url);
+    return `<li class="event${past ? " past" : ""} reveal">
+      <div class="ev-date"><b>${d}</b><span>${MONTHS[m - 1]} ${y}</span></div>
+      <div class="ev-info"><small>${esc(wd)}</small><h3>${esc(e.title)}</h3><p>${esc(place)}</p>${e.note ? `<p class="ev-note">${esc(e.note)}</p>` : ""}</div>
+      ${tk ? `<a class="btn sm" href="${esc(tk)}" target="_blank" rel="noopener">Entradas</a>` : ""}
+    </li>`;
+  }
+  let PAST = [], pastShown = 0;
+  function morePast() {
+    const s = PAST.slice(pastShown, pastShown + 4);
+    $("#past").insertAdjacentHTML("beforeend", s.map((e) => evHTML(e, true)).join(""));
+    pastShown += s.length;
+    $("#past-more").hidden = pastShown >= PAST.length;
+    reveal($("#past"));
+  }
+  $("#past-more").addEventListener("click", morePast);
   function renderEvents(events) {
-    const up = events.filter((e) => e.date >= localToday()).sort((a, b) => a.date.localeCompare(b.date));
-    $("#events").innerHTML = up.map((e) => {
-      const [y, m, d] = e.date.split("-").map(Number);
-      const wd = new Date(y, m - 1, d).toLocaleDateString("es-ES", { weekday: "long" });
-      const place = [e.venue, e.city].filter(Boolean).join(" · ");
-      const tk = safe(e.ticket_url);
-      return `<li class="event reveal">
-        <div class="ev-date"><b>${d}</b><span>${MONTHS[m - 1]} ${y}</span></div>
-        <div class="ev-info"><small>${esc(wd)}</small><h3>${esc(e.title)}</h3><p>${esc(place)}</p></div>
-        ${tk ? `<a class="btn sm" href="${esc(tk)}" target="_blank" rel="noopener">Entradas</a>` : ""}
-      </li>`;
-    }).join("");
+    const today = localToday();
+    const up = events.filter((e) => e.date >= today).sort((a, b) => a.date.localeCompare(b.date));
+    PAST = events.filter((e) => e.date < today).sort((a, b) => b.date.localeCompare(a.date));
+    $("#events").innerHTML = up.map((e) => evHTML(e, false)).join("");
     $("#events-empty").hidden = up.length > 0;
     const ns = $("#next-show");
     if (up.length) {
@@ -90,6 +103,8 @@
       ns.innerHTML = `<b>Próximo directo</b> ${d} ${MONTHS[m - 1]} · ${esc(e.venue || e.title)} →`;
       ns.hidden = false;
     }
+    pastShown = 0; $("#past").innerHTML = ""; morePast();
+    $("#past-wrap").hidden = !PAST.length;
   }
 
   /* ---------- vídeos ---------- */
@@ -200,10 +215,36 @@
   });
   $("#nmore").addEventListener("click", renderNews);
 
-  /* ---------- banda ---------- */
+  /* ---------- banda (fichas tipo cromo) ---------- */
+  let MEM = [], mi = 0;
   function renderMembers(ms) {
-    $("#mgrid").innerHTML = ms.map((m) => `<article class="mcard reveal"><img src="${esc(safe(m.photo_url) || "images/cartel.jpg")}" alt="${esc(m.name)}" loading="lazy"><div><h3>${esc(m.name)}</h3>${m.role ? `<p>${esc(m.role)}</p>` : ""}</div></article>`).join("");
+    MEM = ms;
+    $("#mgrid").innerHTML = ms.map((m, i) => `<button class="mcard reveal" data-m="${i}" aria-label="Ver la ficha de ${esc(m.name)}"><img src="${esc(safe(m.photo_url) || "images/cartel.jpg")}" alt="${esc(m.name)}" loading="lazy"><span class="mhint">Ver ficha</span><div><h3>${esc(m.name)}</h3>${m.role ? `<p>${esc(m.role)}</p>` : ""}</div></button>`).join("");
   }
+  function openMember(i) {
+    if (!MEM.length) return;
+    mi = (i + MEM.length) % MEM.length;
+    const m = MEM[mi], n = (x) => String(x).padStart(2, "0");
+    openModal(`<div class="cromo-wrap">
+      <div class="cromo" id="cromo">
+        <div class="cr-top"><span>Max ★ Estrella</span><span>Nº ${n(mi + 1)} / ${n(MEM.length)}</span></div>
+        <div class="cr-photo"><img src="${esc(safe(m.photo_url) || "images/cartel.jpg")}" alt="${esc(m.name)}"><i class="cr-star">★</i></div>
+        <div class="cr-cap"><h3>${esc(m.name)}</h3>${m.role ? `<p class="cr-role">${esc(m.role)}</p>` : ""}${m.bio ? `<p class="cr-bio">${esc(m.bio)}</p>` : ""}</div>
+      </div>
+      ${MEM.length > 1 ? `<div class="cr-nav"><button data-cr="-1" aria-label="Anterior">‹</button><span>${n(mi + 1)} / ${n(MEM.length)}</span><button data-cr="1" aria-label="Siguiente">›</button></div>` : ""}
+    </div>`);
+    const c = $("#cromo");
+    if (!reduce && matchMedia("(hover:hover)").matches) {
+      c.addEventListener("mousemove", (e) => {
+        const r = c.getBoundingClientRect(), x = (e.clientX - r.left) / r.width - 0.5, y = (e.clientY - r.top) / r.height - 0.5;
+        c.style.setProperty("--ry", (x * 16).toFixed(1) + "deg"); c.style.setProperty("--rx", (-y * 16).toFixed(1) + "deg");
+        c.style.setProperty("--sx", (130 - (x + 0.5) * 160).toFixed(0) + "%");
+      });
+      c.addEventListener("mouseleave", () => { c.style.setProperty("--ry", "0deg"); c.style.setProperty("--rx", "0deg"); });
+    }
+  }
+  $("#mgrid").addEventListener("click", (e) => { const b = e.target.closest(".mcard"); if (b) openMember(+b.dataset.m); });
+  modal.addEventListener("click", (e) => { const b = e.target.closest("[data-cr]"); if (b) openMember(mi + Number(b.dataset.cr)); });
 
   /* ---------- contacto / redes ---------- */
   const SOCIAL = { instagram: "Instagram", youtube: "YouTube", tiktok: "TikTok", facebook: "Facebook", spotify: "Spotify" };

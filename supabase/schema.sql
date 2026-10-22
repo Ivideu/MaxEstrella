@@ -11,6 +11,7 @@ create table if not exists public.events (
   venue text,
   city text,
   ticket_url text,
+  note text,              -- comentario opcional que se muestra en la web
   created_at timestamptz not null default now()
 );
 
@@ -64,6 +65,9 @@ create table if not exists public.inquiries (
   message text,
   created_at timestamptz not null default now()
 );
+
+-- Si ya habías creado la tabla events con una versión anterior, esta línea añade el comentario:
+alter table public.events add column if not exists note text;
 
 -- ---------- SEGURIDAD (RLS) ----------
 -- Cualquiera LEE el contenido público; solo usuarios con login ESCRIBEN.

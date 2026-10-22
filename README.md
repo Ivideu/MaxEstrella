@@ -29,13 +29,15 @@ El panel solo se activa cuando conectas Supabase.
 
 > Las claves de `config.js` son públicas por diseño. Lo que protege los datos son las reglas (RLS) de `schema.sql`: cualquiera puede **leer** la web, solo los usuarios con login pueden **escribir**.
 
+> **Si ya ejecutaste una versión anterior de `schema.sql`:** ejecuta también, una sola vez, `alter table public.events add column if not exists note text;` en el SQL Editor (añade el campo de comentario).
+
 ## 2 · Qué se puede gestionar desde el panel
 
-- **Conciertos**: fecha, sala, ciudad, enlace de entradas. Los pasados se ocultan solos de la web.
+- **Conciertos**: fecha, sala, ciudad, enlace de entradas y un **comentario** opcional. Los próximos salen arriba; al pasar la fecha se mueven solos a «Últimos conciertos» (con su comentario).
 - **Noticias**: titular, texto, foto y modo borrador.
 - **Vídeos**: pega un enlace de **YouTube, Instagram o TikTok**, o sube un **MP4** (máx. 50 MB en el plan gratuito). Se pueden destacar.
 - **Fotos**: subida múltiple arrastrando, con categorías (filtros en la web). Se reducen solas a 2000 px.
-- **La banda**: integrantes con foto, nombre e instrumento.
+- **La banda**: integrantes con foto, nombre, instrumento y leyenda. Al pulsar su foto en la web se abre una ficha tipo cromo.
 - **Mensajes**: solicitudes del formulario de contratación.
 - **Ajustes**: frase de portada, texto de la banda, email y redes sociales.
 

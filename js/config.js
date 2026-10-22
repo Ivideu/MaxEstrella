@@ -6,7 +6,7 @@
    Mientras estén vacías, la web funciona en MODO DEMO.
    ============================================================ */
 window.MAX_CONFIG = {
-  SUPABASE_URL: "https://glvdsqvnwujgnediijzp.supabase.co",       // ej. https://abcdxyz.supabase.co
-  SUPABASE_ANON_KEY: "sb_publishable_w_WjYcDDfDiWegUcxgi7Cg_2U6muotg",  // clave "anon" / "publishable"
+  SUPABASE_URL: "",       // ej. https://abcdxyz.supabase.co
+  SUPABASE_ANON_KEY: "",  // clave "anon" / "publishable"
   CONTACT_EMAIL: "contratacion@maxestrella.es"  // se usa en modo demo y como respaldo
 };

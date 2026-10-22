@@ -68,7 +68,8 @@
         { k: "title", l: "Título", req: 1, ph: "Max Estrella en directo" },
         { k: "venue", l: "Sala o lugar", ph: "Sala Fun House" },
         { k: "city", l: "Ciudad y dirección", ph: "Madrid · C. Palafox, 8" },
-        { k: "ticket_url", l: "Enlace de entradas", t: "url", help: "Opcional. Si lo dejas vacío no aparece el botón." }
+        { k: "ticket_url", l: "Enlace de entradas", t: "url", help: "Opcional. Si lo dejas vacío no aparece el botón." },
+        { k: "note", l: "Comentario (opcional)", t: "textarea", help: "Se muestra en la web debajo del concierto, también cuando ya haya pasado. Ej.: «Sala llena, gracias a todos»." }
       ],
       row: (r) => ({ t: r.title, s: `${fmt(r.date)} · ${[r.venue, r.city].filter(Boolean).join(" · ")}`, tag: r.date < new Date().toISOString().slice(0, 10) ? "pasado" : "" })
     },
@@ -105,6 +106,7 @@
       fields: [
         { k: "name", l: "Nombre", req: 1 },
         { k: "role", l: "Instrumento / papel", ph: "Voz y guitarra" },
+        { k: "bio", l: "Leyenda de la ficha", t: "textarea", help: "Frase corta que aparece en la tarjeta al pulsar su foto en la web." },
         { k: "photo_url", l: "Foto", t: "image", folder: "members" },
         { k: "sort", l: "Orden (número pequeño = antes)", t: "number", def: 0 }
       ],

@@ -161,7 +161,7 @@ h2{font-family:var(--display);font-size:clamp(2.4rem,6.4vw,5rem);line-height:.95
 /* ---------- BANDA ---------- */
 .bio{max-width:62ch;font-size:clamp(1.15rem,2.2vw,1.5rem);line-height:1.55;margin-bottom:56px;font-weight:500}
 .mgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:18px}
-.mcard{position:relative;aspect-ratio:3/4;overflow:hidden;background:#1c1515;border:1px solid var(--line)}
+.mcard{position:relative;aspect-ratio:3/4;overflow:hidden;background:#1c1515;border:1px solid var(--line);display:block;width:100%;padding:0;text-align:left;cursor:pointer;color:inherit}
 .mcard img{width:100%;height:100%;object-fit:cover;filter:grayscale(1) contrast(1.05);transition:filter .5s,transform .8s var(--ease)}
 .mcard:hover img{filter:none;transform:scale(1.06)}
 .mcard::after{content:"";position:absolute;inset:0;background:linear-gradient(transparent 45%,rgba(0,0,0,.92))}
@@ -248,3 +248,40 @@ h2{font-family:var(--display);font-size:clamp(2.4rem,6.4vw,5rem);line-height:.95
   h1 .ln>*{transform:none}
   .reveal{opacity:1;transform:none}
 }
+
+/* ---------- conciertos pasados y comentarios ---------- */
+.past-wrap{margin-top:clamp(56px,8vw,96px)}
+.sub{font-family:var(--cond);text-transform:uppercase;letter-spacing:.2em;font-size:1.05rem;font-weight:500;margin-bottom:18px;display:flex;align-items:center;gap:14px;color:var(--ink)}
+.sub::after{content:"";flex:1;height:2px;background:var(--ink);opacity:.25}
+.past-list{border-top:2px solid rgba(14,12,12,.35)}
+.past-list .event{border-bottom-color:rgba(14,12,12,.35)}
+.event.past{grid-template-columns:130px 1fr;padding:20px 18px}
+.event.past .ev-date{color:var(--ink);opacity:.65}
+.event.past .ev-date b{font-size:2.4rem}
+.event.past .ev-info h3{font-size:clamp(1.15rem,2.4vw,1.5rem)}
+.event.past:hover .ev-date{opacity:1;color:var(--cream)}
+.ev-info .ev-note{margin-top:10px;padding-left:14px;border-left:3px solid var(--red2);font-style:italic;max-width:64ch;font-size:.97rem;opacity:.95;white-space:pre-wrap}
+.event:hover .ev-info .ev-note{border-left-color:var(--cream)}
+@media(max-width:820px){.event.past{grid-template-columns:84px 1fr}.event.past .ev-date b{font-size:2rem}}
+
+/* ---------- ficha de la banda (cromo) ---------- */
+.mhint{position:absolute;top:12px;right:12px;z-index:2;font-family:var(--cond);letter-spacing:.16em;text-transform:uppercase;font-size:.7rem;background:var(--cream);color:var(--ink);padding:3px 9px;opacity:0;transform:translateY(-6px);transition:.3s}
+.mcard:hover .mhint,.mcard:focus-visible .mhint{opacity:1;transform:none}
+@media(hover:none){.mhint{opacity:1;transform:none}}
+.cromo-wrap{display:flex;flex-direction:column;align-items:center;gap:20px;max-height:96vh;overflow:auto;padding:14px 16px;animation:pop .4s var(--ease)}
+@keyframes pop{from{opacity:0;transform:scale(.9) translateY(14px)}}
+.cromo{--rx:0deg;--ry:0deg;--sx:150%;width:min(350px,80vw);background:var(--cream);color:var(--ink);padding:14px 14px 20px;border-radius:18px;border:3px solid var(--ink);
+  box-shadow:0 0 0 7px var(--red2),0 34px 90px rgba(0,0,0,.75);transform:perspective(900px) rotateX(var(--rx)) rotateY(var(--ry));transition:transform .18s ease-out;
+  background-image:radial-gradient(rgba(0,0,0,.07) 1px,transparent 1.2px);background-size:5px 5px}
+.cr-top{display:flex;justify-content:space-between;font-family:var(--cond);letter-spacing:.2em;text-transform:uppercase;font-size:.72rem;color:var(--red);margin-bottom:10px}
+.cr-photo{position:relative;aspect-ratio:4/5;max-height:50vh;width:100%;border:3px solid var(--ink);overflow:hidden;background:#000}
+.cr-photo img{width:100%;height:100%;object-fit:cover;filter:sepia(.3) contrast(1.05)}
+.cr-photo::after{content:"";position:absolute;inset:0;pointer-events:none;background:linear-gradient(115deg,transparent 35%,rgba(255,255,255,.35) 50%,transparent 65%);background-size:260% 100%;background-position:var(--sx) 0;mix-blend-mode:overlay;transition:background-position .1s}
+.cr-star{position:absolute;right:10px;top:8px;font-style:normal;font-size:1.6rem;color:var(--red2);text-shadow:0 2px 0 var(--ink)}
+.cr-cap{text-align:center;margin-top:16px}
+.cr-cap h3{font-family:var(--display);font-weight:400;font-size:1.8rem;line-height:1;text-transform:uppercase;color:var(--red)}
+.cr-role{display:inline-block;margin-top:10px;background:var(--ink);color:var(--cream);font-family:var(--cond);letter-spacing:.18em;text-transform:uppercase;font-size:.78rem;padding:3px 12px}
+.cr-bio{margin-top:12px;font-size:.93rem;line-height:1.5;font-style:italic;padding-top:12px;border-top:2px dashed rgba(14,12,12,.35)}
+.cr-nav{display:flex;align-items:center;gap:20px;font-family:var(--cond);letter-spacing:.2em}
+.cr-nav button{width:48px;height:48px;border-radius:50%;border:1px solid var(--line);background:rgba(255,255,255,.08);font-size:1.8rem;line-height:1;cursor:pointer;color:var(--cream)}
+.cr-nav button:hover{background:var(--red2)}

@@ -23,10 +23,13 @@
 
   /* ---------- DATOS DEMO (se ven mientras no haya Supabase) ---------- */
   const year = new Date().getFullYear();
+  const iso = (days) => new Date(Date.now() + days * 864e5 - new Date().getTimezoneOffset() * 6e4).toISOString().slice(0, 10);
   const DEMO = {
     events: [
-      { id: "d1", date: `${year + (new Date().getMonth() > 10 ? 1 : 0)}-11-14`, title: "Max Estrella en directo", venue: "Sala Fun House", city: "Madrid · C. Palafox, 8", ticket_url: "" },
-      { id: "d2", date: `${year + 1}-01-23`, title: "Gira de invierno", venue: "Sala por confirmar", city: "Madrid", ticket_url: "" }
+      { id: "d1", date: iso(22), title: "Max Estrella en directo", venue: "Sala Fun House", city: "Madrid · C. Palafox, 8", ticket_url: "", note: "Os esperamos con el repertorio completo y alguna sorpresa." },
+      { id: "d2", date: iso(92), title: "Gira de invierno", venue: "Sala por confirmar", city: "Madrid", ticket_url: "", note: "" },
+      { id: "d3", date: iso(-35), title: "Noche de rock en directo", venue: "Sala Fun House", city: "Madrid", ticket_url: "", note: "Sala llena y un público increíble. ¡Gracias a todos por cantar con nosotros!" },
+      { id: "d4", date: iso(-120), title: "Concierto de verano", venue: "Sala por confirmar", city: "Madrid", ticket_url: "", note: "Comentario de ejemplo: lo escribís desde el panel al editar el concierto." }
     ],
     news: [
       { id: "n1", title: "Bienvenidos a la nueva web de Max Estrella", body: "Aquí iremos publicando conciertos, vídeos, fotos y todas las novedades del grupo.\n\nEsta noticia es de ejemplo: desde el panel de administración podréis escribir las vuestras, con foto y todo.", image_url: "images/cartel.jpg", published_at: new Date().toISOString() },
@@ -42,11 +45,11 @@
       { id: "p5", url: "images/members/m3.jpg", caption: "Bajo", category: "Banda" }
     ],
     members: [
-      { id: "m2", name: "Voz y guitarra", role: "Edita el nombre desde el panel", photo_url: "images/members/m2.jpg" },
-      { id: "m1", name: "Batería", role: "Edita el nombre desde el panel", photo_url: "images/members/m1.jpg" },
-      { id: "m3", name: "Bajo", role: "Edita el nombre desde el panel", photo_url: "images/members/m3.jpg" },
-      { id: "m4", name: "Guitarra", role: "Edita el nombre desde el panel", photo_url: "images/members/m4.jpg" },
-      { id: "m5", name: "Teclados", role: "Edita el nombre desde el panel", photo_url: "images/members/m5.jpg" }
+      { id: "m2", name: "Voz y guitarra", role: "Integrante", bio: "Aquí irá la frase de cada integrante: quién es, qué toca y qué le mueve. Se edita desde el panel.", photo_url: "images/members/m2.jpg" },
+      { id: "m1", name: "Batería", role: "Integrante", bio: "Aquí irá la frase de cada integrante: quién es, qué toca y qué le mueve. Se edita desde el panel.", photo_url: "images/members/m1.jpg" },
+      { id: "m3", name: "Bajo", role: "Integrante", bio: "Aquí irá la frase de cada integrante: quién es, qué toca y qué le mueve. Se edita desde el panel.", photo_url: "images/members/m3.jpg" },
+      { id: "m4", name: "Guitarra", role: "Integrante", bio: "Aquí irá la frase de cada integrante: quién es, qué toca y qué le mueve. Se edita desde el panel.", photo_url: "images/members/m4.jpg" },
+      { id: "m5", name: "Teclados", role: "Integrante", bio: "Aquí irá la frase de cada integrante: quién es, qué toca y qué le mueve. Se edita desde el panel.", photo_url: "images/members/m5.jpg" }
     ],
     settings: {
       hero_tagline: "Canciones que duelen. Canciones que emocionan.",
