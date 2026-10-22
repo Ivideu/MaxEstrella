@@ -42,7 +42,7 @@ i{font-style:normal}
 .nav.open .burger span:last-child{top:22px;transform:rotate(-45deg)}
 
 /* ---------- HERO ---------- */
-.hero{position:relative;min-height:100svh;display:flex;align-items:center;padding:120px 0 90px;overflow:hidden;isolation:isolate}
+.hero{position:relative;min-height:calc(100svh - 96px);display:flex;align-items:center;padding:120px 0 90px;overflow:hidden;isolation:isolate}
 .hero-bg{position:absolute;inset:-60px;z-index:-1;
   background:radial-gradient(ellipse at 70% 45%,rgba(196,40,61,.5),transparent 60%),linear-gradient(180deg,rgba(11,9,9,.35),var(--bg) 96%),url(../images/cartel.jpg) center/cover;
   filter:blur(26px) brightness(.5) saturate(1.2)}
@@ -83,7 +83,7 @@ h1 b{color:var(--red2);font-weight:400;font-size:.8em;animation:rise 1s var(--ea
 .btn.sm{padding:10px 20px;font-size:.85rem}
 
 /* ---------- MARQUEE ---------- */
-.marquee{background:var(--red2);color:var(--cream);overflow:hidden;white-space:nowrap;border-block:2px solid var(--ink);transform:rotate(-1deg) scale(1.02);margin:-14px 0 -6px;position:relative;z-index:2}
+.marquee{background:var(--red2);color:var(--cream);overflow:hidden;white-space:nowrap;border-block:2px solid var(--ink);transform:rotate(-1deg) scale(1.02);margin:-4px 0 -6px;position:relative;z-index:2}
 .marquee .track{display:inline-flex;animation:marq 32s linear infinite}
 .marquee span{font-family:var(--display);font-size:1.15rem;letter-spacing:.08em;padding:13px 0}
 .marquee i{color:var(--ink);padding:0 .5em}
@@ -120,7 +120,6 @@ h2{font-family:var(--display);font-size:clamp(2.4rem,6.4vw,5rem);line-height:.95
 .ev-info .ev-note{margin-top:10px;padding-left:14px;border-left:3px solid var(--red2);font-style:italic;max-width:64ch;font-size:.97rem;opacity:.95;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .event:hover .ev-note{border-left-color:var(--cream)}
 .ev-act{display:flex;align-items:center;gap:16px}
-.ev-tag{font-family:var(--cond);letter-spacing:.18em;text-transform:uppercase;font-size:.78rem;white-space:nowrap;border-bottom:2px solid currentColor;padding-bottom:2px;opacity:.8}
 .event .btn{background:var(--ink);border-color:var(--ink);color:var(--cream)}
 .event:hover .btn{background:var(--cream);border-color:var(--cream);color:var(--ink)}
 
@@ -173,17 +172,27 @@ h2{font-family:var(--display);font-size:clamp(2.4rem,6.4vw,5rem);line-height:.95
 .cc.ph h3{font-size:1.05rem}
 
 /* ---------- NOTICIAS ---------- */
-.ngrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:22px}
-.cc.nc{aspect-ratio:4/5;border:2px solid var(--ink);box-shadow:6px 6px 0 var(--ink)}
-.nc-ph{width:100%;height:100%;display:grid;place-items:center;background:radial-gradient(circle at 30% 20%,var(--red2),transparent 65%),var(--red);font-size:4rem;color:var(--cream)}
+.ngrid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+.cc.nc{aspect-ratio:16/10;border:2px solid var(--ink);box-shadow:0 14px 30px rgba(0,0,0,.28)}
+.cc.nc.feat{grid-column:1/-1;aspect-ratio:auto;height:clamp(340px,42vw,500px);box-shadow:8px 8px 0 var(--red)}
+.cc.nc .cc-meta{padding:18px 20px}
+.cc.nc h3{font-size:1.2rem}
+.cc.nc.feat .cc-meta{padding:clamp(22px,4vw,44px);max-width:min(760px,100%)}
+.cc.nc.feat h3{font-size:clamp(1.9rem,4.6vw,3.4rem);line-height:1}
+.cc.nc.feat .nc-ex{font-size:1.05rem;-webkit-line-clamp:3;max-width:56ch;margin-top:14px}
+.cc.nc.feat::after{background:linear-gradient(90deg,rgba(0,0,0,.9) 0,rgba(0,0,0,.55) 55%,transparent 100%),linear-gradient(transparent 55%,rgba(0,0,0,.6))}
+.nc-last{display:inline-block;font-family:var(--cond);letter-spacing:.24em;text-transform:uppercase;font-size:.8rem;background:var(--red2);color:#fff;padding:3px 12px;margin-bottom:14px}
+.nc-ph{width:100%;height:100%;display:grid;place-items:start center;padding-top:12%;background:radial-gradient(circle at 30% 20%,var(--red2),transparent 65%),var(--red);font-size:4rem;color:var(--cream)}
 .nc-ex{font-size:.88rem;line-height:1.4;opacity:.85;margin-top:8px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+@media(max-width:960px){.ngrid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:620px){.ngrid{grid-template-columns:1fr}.cc.nc.feat{height:auto;aspect-ratio:4/5}.cc.nc.feat::after{background:linear-gradient(transparent 30%,rgba(0,0,0,.92))}.cc.nc.feat .cc-meta{padding:20px}}
 
 /* ---------- BANDA ---------- */
 .bio{max-width:62ch;font-size:clamp(1.15rem,2.2vw,1.5rem);line-height:1.55;margin-bottom:56px;font-weight:500}
 .mgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:18px}
 .cc.mc{aspect-ratio:3/4}
 
-/* ---------- contacto ---------- */
+/* ---------- CONTRATACION ---------- */
 .contact{display:grid;grid-template-columns:1fr 1.1fr;gap:clamp(30px,6vw,80px);align-items:start}
 .lead{font-size:1.15rem;max-width:42ch;margin:20px 0}
 .direct a{font-weight:600}

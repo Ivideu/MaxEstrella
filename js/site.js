@@ -168,7 +168,7 @@
     return `<li class="event${past ? " past" : ""} reveal" data-g="${past ? "e" : "u"}" data-i="${i}" role="button" tabindex="0" aria-label="Ver ficha: ${esc(e.title)}">
       <div class="ev-date"><b>${d}</b><span>${MONTHS[m - 1]} ${y}</span></div>
       <div class="ev-info"><small>${esc(wd)}</small><h3>${esc(e.title)}</h3><p>${esc(place)}</p>${e.note ? `<p class="ev-note">${esc(e.note)}</p>` : ""}</div>
-      <div class="ev-act">${tk ? `<a class="btn sm" href="${esc(tk)}" target="_blank" rel="noopener">Entradas</a>` : ""}${past ? '<span class="ev-stamp">Finalizado</span>' : '<span class="ev-tag">Ver ficha +</span>'}</div>
+      <div class="ev-act">${tk ? `<a class="btn sm" href="${esc(tk)}" target="_blank" rel="noopener">Entradas</a>` : ""}${past ? '<span class="ev-stamp">Finalizado</span>' : ""}</div>
     </li>`;
   }
   let UP = [], PAST = [], pastShown = 0;
@@ -275,14 +275,15 @@
   let NEWS = [], nShown = 0;
   function renderNews() {
     const g = $("#ngrid");
-    const slice = NEWS.slice(nShown, nShown + 6);
+    const slice = NEWS.slice(nShown, nShown + (nShown === 0 ? 7 : 6));
     g.insertAdjacentHTML("beforeend", slice.map((n, k) => {
-      const ex = (n.body || "").replace(/\s+/g, " ").slice(0, 130);
+      const i = nShown + k, feat = i === 0, lim = feat ? 220 : 110;
+      const ex = (n.body || "").replace(/\s+/g, " ").slice(0, lim);
       const img = n.image_url && safe(n.image_url);
-      return `<button class="cc nc reveal" data-i="${nShown + k}" aria-label="Leer noticia: ${esc(n.title)}">
+      return `<button class="cc nc${feat ? " feat" : ""} reveal" data-i="${i}" aria-label="Leer noticia: ${esc(n.title)}">
         <div class="vt">${img ? `<img src="${esc(img)}" alt="" loading="lazy">` : '<div class="nc-ph">★</div>'}</div>
         <span class="mhint">Leer</span>
-        <div class="cc-meta"><h3>${esc(n.title)}</h3>${ex ? `<p class="nc-ex">${esc(ex)}${(n.body || "").length > 130 ? "…" : ""}</p>` : ""}<p class="cc-pill">${esc(fmtDate(n.published_at))}</p></div>
+        <div class="cc-meta">${feat ? '<p class="nc-last">Última noticia</p>' : ""}<h3>${esc(n.title)}</h3>${ex ? `<p class="nc-ex">${esc(ex)}${(n.body || "").length > lim ? "…" : ""}</p>` : ""}<p class="cc-pill">${esc(fmtDate(n.published_at))}</p></div>
       </button>`;
     }).join(""));
     nShown += slice.length;
@@ -335,7 +336,7 @@
       msg.textContent = "¡Mensaje enviado! Te responderemos muy pronto."; msg.classList.add("ok"); f.reset();
     } else {
       const body = `Nombre: ${d.name}\nEmail: ${d.email}\nTipo: ${d.kind}\nFecha y lugar: ${d.date_place}\n\n${d.message}`;
-      location.href = `mailto:${window.__mail || ""}?subject=${encodeURIComponent("contacto Max Estrella")}&body=${encodeURIComponent(body)}`;
+      location.href = `mailto:${window.__mail || ""}?subject=${encodeURIComponent("Contratación Max Estrella")}&body=${encodeURIComponent(body)}`;
       msg.textContent = "Se abrirá tu correo con el mensaje listo (modo demo)."; msg.classList.add("ok");
     }
   });
