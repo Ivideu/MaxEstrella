@@ -252,7 +252,7 @@
     if (S.hero_tagline) $("#tagline").textContent = S.hero_tagline;
     $("#bio").textContent = S.bio || "";
     const links = Object.keys(SOCIAL).filter((k) => safe(S[k])).map((k) => `<a href="${esc(safe(S[k]))}" target="_blank" rel="noopener">${SOCIAL[k]}</a>`).join("");
-    $("#social").innerHTML = links; $("#social-foot").innerHTML = links;
+    $("#social").innerHTML = links; $("#social-top").innerHTML = links; $("#social-foot").innerHTML = links;
     const mail = S.contact_email || M.config.CONTACT_EMAIL;
     if (mail) { $("#direct-mail").hidden = false; const a = $("#mail-link"); a.textContent = mail; a.href = "mailto:" + mail; }
     window.__mail = mail;
@@ -271,7 +271,7 @@
       msg.textContent = "¡Mensaje enviado! Te responderemos muy pronto."; msg.classList.add("ok"); f.reset();
     } else {
       const body = `Nombre: ${d.name}\nEmail: ${d.email}\nTipo: ${d.kind}\nFecha y lugar: ${d.date_place}\n\n${d.message}`;
-      location.href = `mailto:${window.__mail || ""}?subject=${encodeURIComponent("Contratación Max Estrella")}&body=${encodeURIComponent(body)}`;
+      location.href = `mailto:${window.__mail || ""}?subject=${encodeURIComponent("Contacto Max Estrella")}&body=${encodeURIComponent(body)}`;
       msg.textContent = "Se abrirá tu correo con el mensaje listo (modo demo)."; msg.classList.add("ok");
     }
   });

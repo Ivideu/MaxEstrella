@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Max Estrella · Rock en directo desde Madrid</title>
-  <meta name="description" content="Max Estrella: rock en directo desde Madrid. Próximos conciertos, vídeos, fotos, noticias y contratación del grupo.">
+  <meta name="description" content="Max Estrella: rock en directo desde Madrid. Próximos conciertos, vídeos, fotos, noticias y contacto del grupo.">
   <meta name="theme-color" content="#0b0909">
   <meta property="og:title" content="Max Estrella · Rock en directo">
   <meta property="og:description" content="Canciones que duelen. Canciones que emocionan.">
@@ -22,13 +22,14 @@
 
 <header class="nav" id="nav">
   <a class="brand" href="#inicio" aria-label="Max Estrella, inicio">MAX <i>★</i> ESTRELLA</a>
+  <div class="social-top" id="social-top"></div>
   <nav id="menu" aria-label="Principal">
     <a href="#conciertos">Conciertos</a>
     <a href="#videos">Vídeos</a>
     <a href="#fotos">Fotos</a>
     <a href="#noticias">Noticias</a>
     <a href="#banda">La banda</a>
-    <a href="#contratacion" class="pill">Contratación</a>
+    <a href="#contratacion" class="pill">Contacto</a>
   </nav>
   <button class="burger" id="burger" aria-label="Abrir menú" aria-expanded="false" aria-controls="menu"><span></span><span></span></button>
 </header>
@@ -47,7 +48,7 @@
         </h1>
         <p class="tagline" id="tagline">Canciones que duelen. Canciones que emocionan.</p>
         <div class="hero-cta">
-          <a class="btn" href="#contratacion">Contratar al grupo</a>
+          <a class="btn" href="#contratacion">Contactar con el grupo</a>
           <a class="btn ghost" href="#videos"><svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M8 5v14l11-7z" fill="currentColor"/></svg> Ver vídeos</a>
         </div>
         <a class="next-show" id="next-show" href="#conciertos" hidden></a>
@@ -128,12 +129,12 @@
     </div>
   </section>
 
-  <!-- CONTRATACION -->
+  <!-- CONTRATACION / CONTACTO -->
   <section class="section red" id="contratacion">
     <div class="wrap contact">
       <div class="reveal">
         <p class="eyebrow">Salas · festivales · eventos privados</p>
-        <h2>Contratación</h2>
+        <h2>Contacto</h2>
         <p class="lead">Cuéntanos qué tienes en mente (fecha, lugar y tipo de evento) y te respondemos lo antes posible.</p>
         <p class="direct" id="direct-mail" hidden>O escríbenos directamente a <a id="mail-link" href="#"></a></p>
         <div class="social" id="social"></div>
@@ -152,7 +153,7 @@
         <label>Fecha y lugar<input name="date_place" placeholder="Ej. 15 de marzo · Madrid"></label>
         <label class="full">Mensaje<textarea name="message" rows="5"></textarea></label>
         <input class="hp" name="website" tabindex="-1" autocomplete="off" aria-hidden="true">
-        <button class="btn light" type="submit">Enviar solicitud</button>
+        <button class="btn light" type="submit">Enviar mensaje</button>
         <p class="form-msg" id="form-msg" role="status"></p>
       </form>
     </div>

@@ -24,6 +24,9 @@ i{font-style:normal}
 .nav.scrolled{background:rgba(11,9,9,.82);backdrop-filter:blur(12px);padding:11px 28px;border-bottom:1px solid var(--line)}
 .brand{font-family:var(--display);font-size:1.2rem;letter-spacing:.05em;text-decoration:none;color:var(--cream)}
 .brand i{color:var(--red2)}
+.social-top{display:flex;gap:10px;align-items:center;margin-left:24px}
+.social-top a{font-family:var(--cond);text-transform:uppercase;letter-spacing:.14em;font-size:.78rem;text-decoration:none;border:1px solid rgba(234,223,198,.3);padding:4px 10px;background:rgba(255,255,255,.04);transition:.2s}
+.social-top a:hover{background:var(--cream);color:var(--ink);border-color:var(--cream)}
 .nav nav{display:flex;gap:28px;align-items:center}
 .nav nav a{font-family:var(--cond);text-transform:uppercase;letter-spacing:.14em;font-size:.88rem;text-decoration:none;opacity:.78;position:relative;transition:opacity .2s}
 .nav nav a:not(.pill)::after{content:"";position:absolute;left:0;right:0;bottom:-6px;height:2px;background:var(--red2);transform:scaleX(0);transform-origin:left;transition:transform .3s var(--ease)}
@@ -134,25 +137,29 @@ h2{font-family:var(--display);font-size:clamp(2.4rem,6.4vw,5rem);line-height:.95
 .vcard.big .vmeta strong{font-size:1.6rem}
 .vmeta em{font-style:normal;font-family:var(--cond);letter-spacing:.22em;text-transform:uppercase;font-size:.7rem;color:var(--red2);background:var(--cream);padding:2px 8px;display:inline-block;margin-bottom:8px}
 
-/* ---------- FOTOS ---------- */
+/* ---------- FOTOS (Efecto Cromo / Tarjeta) ---------- */
 .chips{display:flex;flex-wrap:wrap;gap:10px;margin:-20px 0 34px}
 .chip{background:none;border:1px solid var(--line);padding:7px 18px;font-family:var(--cond);text-transform:uppercase;letter-spacing:.16em;font-size:.82rem;cursor:pointer;transition:.2s;border-radius:40px}
 .chip:hover{border-color:var(--cream)}
 .chip.on{background:var(--cream);color:var(--ink);border-color:var(--cream)}
 .masonry{columns:4 250px;column-gap:14px}
-.ph{break-inside:avoid;margin-bottom:14px;position:relative;overflow:hidden;cursor:zoom-in;background:#1c1515;display:block;width:100%;border:0;padding:0}
-.ph img{width:100%;height:auto;transition:transform .7s var(--ease),filter .4s}
-.ph:hover img{transform:scale(1.05)}
-.ph span{position:absolute;left:0;right:0;bottom:0;padding:34px 14px 12px;background:linear-gradient(transparent,rgba(0,0,0,.85));font-family:var(--cond);text-transform:uppercase;letter-spacing:.1em;font-size:.82rem;opacity:0;transform:translateY(8px);transition:.3s;text-align:left}
-.ph:hover span,.ph:focus-visible span{opacity:1;transform:none}
+.ph{break-inside:avoid;margin-bottom:14px;position:relative;overflow:hidden;cursor:zoom-in;background:var(--cream);border:2px solid var(--ink);padding:6px 6px 26px 6px;box-shadow:4px 4px 0 var(--ink);display:block;width:100%;transition:transform .3s var(--ease),box-shadow .3s var(--ease)}
+.ph:hover{transform:translate(-3px,-3px);box-shadow:7px 7px 0 var(--red2)}
+.ph img{width:100%;height:auto;filter:sepia(.15) contrast(1.05);transition:filter .4s,transform .7s var(--ease)}
+.ph:hover img{filter:none;transform:scale(1.03)}
+.ph::after{content:"";position:absolute;inset:0;pointer-events:none;background:linear-gradient(115deg,transparent 35%,rgba(255,255,255,.3) 50%,transparent 65%);background-size:260% 100%;background-position:150% 0;mix-blend-mode:overlay;transition:background-position .4s}
+.ph:hover::after{background-position:-50% 0}
+.ph span{position:absolute;left:0;right:0;bottom:0;padding:6px 10px;background:var(--cream);color:var(--ink);font-family:var(--cond);text-transform:uppercase;letter-spacing:.1em;font-size:.78rem;text-align:center;border-top:1px solid var(--ink)}
 
-/* ---------- NOTICIAS ---------- */
+/* ---------- NOTICIAS (Efecto Cromo / Tarjeta) ---------- */
 .ngrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:26px}
-.ncard{display:flex;flex-direction:column;background:var(--cream);color:var(--ink);border:2px solid var(--ink);box-shadow:7px 7px 0 var(--ink);text-decoration:none;transition:transform .3s var(--ease),box-shadow .3s var(--ease);text-align:left;cursor:pointer;padding:0}
-.ncard:hover{transform:translate(-4px,-4px);box-shadow:11px 11px 0 var(--red)}
-.ncard .ni{aspect-ratio:16/9;background:var(--red);display:grid;place-items:center;font-size:3rem;color:var(--cream);overflow:hidden;border-bottom:2px solid var(--ink)}
-.ncard .ni img{width:100%;height:100%;object-fit:cover}
-.ncard .nb{padding:20px 22px 24px;display:flex;flex-direction:column;gap:8px;flex:1}
+.ncard{display:flex;flex-direction:column;background:var(--cream);color:var(--ink);border:2px solid var(--ink);box-shadow:7px 7px 0 var(--ink);text-decoration:none;transition:transform .3s var(--ease),box-shadow .3s var(--ease);text-align:left;cursor:pointer;padding:6px 6px 12px 6px;position:relative;overflow:hidden}
+.ncard:hover{transform:translate(-4px,-4px);box-shadow:11px 11px 0 var(--red2)}
+.ncard::after{content:"";position:absolute;inset:0;pointer-events:none;background:linear-gradient(115deg,transparent 35%,rgba(255,255,255,.3) 50%,transparent 65%);background-size:260% 100%;background-position:150% 0;mix-blend-mode:overlay;transition:background-position .4s}
+.ncard:hover::after{background-position:-50% 0}
+.ncard .ni{aspect-ratio:16/9;background:var(--red);display:grid;place-items:center;font-size:3rem;color:var(--cream);overflow:hidden;border:1px solid var(--ink)}
+.ncard .ni img{width:100%;height:100%;object-fit:cover;filter:sepia(.15) contrast(1.05)}
+.ncard .nb{padding:14px 12px 10px;display:flex;flex-direction:column;gap:8px;flex:1}
 .ncard time{font-family:var(--cond);letter-spacing:.2em;text-transform:uppercase;font-size:.78rem;color:var(--red)}
 .ncard h3{font-family:var(--display);font-weight:400;font-size:1.45rem;line-height:1.1}
 .ncard p{font-size:.95rem;opacity:.8}
@@ -169,7 +176,7 @@ h2{font-family:var(--display);font-size:clamp(2.4rem,6.4vw,5rem);line-height:.95
 .mcard h3{font-family:var(--display);font-weight:400;font-size:1.35rem;line-height:1.05;text-transform:uppercase}
 .mcard p{font-family:var(--cond);letter-spacing:.14em;text-transform:uppercase;font-size:.78rem;color:var(--red2);background:var(--cream);display:inline-block;padding:1px 8px;margin-top:8px}
 
-/* ---------- CONTRATACION ---------- */
+/* ---------- CONTRATACION / CONTACTO ---------- */
 .contact{display:grid;grid-template-columns:1fr 1.1fr;gap:clamp(30px,6vw,80px);align-items:start}
 .lead{font-size:1.15rem;max-width:42ch;margin:20px 0}
 .direct a{font-weight:600}
@@ -232,6 +239,7 @@ h2{font-family:var(--display);font-size:clamp(2.4rem,6.4vw,5rem);line-height:.95
 }
 @media(max-width:820px){
   .burger{display:block}
+  .social-top{display:none} /* Se ocultan en móvil para dejar espacio al menú desplegable */
   .nav.scrolled{backdrop-filter:none;background:rgba(11,9,9,.97)}
   .nav nav{position:fixed;inset:0;background:var(--bg);flex-direction:column;justify-content:center;gap:26px;transform:translateY(-100%);transition:transform .45s var(--ease);z-index:-1}
   .nav.open nav{transform:none}
