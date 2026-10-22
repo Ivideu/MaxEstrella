@@ -137,3 +137,4 @@ insert into public.settings (key, value) values
   ('bio', 'Max Estrella nace de la necesidad de contar lo que a veces no se dice: la soledad, la depresión que no avisa, el dolor que se convierte en canción.'),
   ('contact_email', 'contratacion@maxestrella.es')
 on conflict (key) do nothing;
+alter table public.events add column if not exists note text;
