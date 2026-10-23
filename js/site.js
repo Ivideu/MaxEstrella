@@ -275,15 +275,13 @@
   let NEWS = [], nShown = 0;
   function renderNews() {
     const g = $("#ngrid");
-    const slice = NEWS.slice(nShown, nShown + (nShown === 0 ? 7 : 6));
+    const slice = NEWS.slice(nShown, nShown + 6);
     g.insertAdjacentHTML("beforeend", slice.map((n, k) => {
-      const i = nShown + k, feat = i === 0, lim = feat ? 220 : 110;
-      const ex = (n.body || "").replace(/\s+/g, " ").slice(0, lim);
+      const ex = (n.body || "").replace(/\s+/g, " ").slice(0, 100);
       const img = n.image_url && safe(n.image_url);
-      return `<button class="cc nc${feat ? " feat" : ""} reveal" data-i="${i}" aria-label="Leer noticia: ${esc(n.title)}">
+      return `<button class="cc nc reveal" data-i="${nShown + k}" aria-label="Leer noticia: ${esc(n.title)}">
         <div class="vt">${img ? `<img src="${esc(img)}" alt="" loading="lazy">` : '<div class="nc-ph">★</div>'}</div>
-        <span class="mhint">Leer</span>
-        <div class="cc-meta">${feat ? '<p class="nc-last">Última noticia</p>' : ""}<h3>${esc(n.title)}</h3>${ex ? `<p class="nc-ex">${esc(ex)}${(n.body || "").length > lim ? "…" : ""}</p>` : ""}<p class="cc-pill">${esc(fmtDate(n.published_at))}</p></div>
+        <div class="nc-body"><time>${esc(fmtDate(n.published_at))}</time><h3>${esc(n.title)}</h3>${ex ? `<p class="nc-ex">${esc(ex)}${(n.body || "").length > 100 ? "…" : ""}</p>` : ""}<span class="nc-rm">Leer más →</span></div>
       </button>`;
     }).join(""));
     nShown += slice.length;
