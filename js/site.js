@@ -153,7 +153,9 @@
       <div class="cromo ${b.cls}" id="cromo">${b.html}</div>
       ${L.length > 1 ? `<div class="cr-nav"><button data-cr="-1" aria-label="Anterior">‹</button><span>${pad(idx + 1)} / ${pad(L.length)}</span><button data-cr="1" aria-label="Siguiente">›</button></div>` : ""}
     </div>`);
-        if (!$("#cromo iframe")) tilt($("#cromo"), b.tilt);
+    igH = 0;
+    if ($("#cromo iframe")) $("#cromo").classList.add("nofx");
+    else tilt($("#cromo"), b.tilt);
     fitCromo();
   }
 
@@ -170,13 +172,15 @@
   addEventListener("resize", fitCromo);
 
   /* Instagram avisa de la altura real de su contenido: el iframe se ajusta y desaparece la barra interior */
+  let igH = 0;
   addEventListener("message", (e) => {
     if (e.origin !== "https://www.instagram.com") return;
     let d = e.data;
     if (typeof d === "string") { try { d = JSON.parse(d); } catch (_) { return; } }
     if (!d || d.type !== "MEASURE" || !d.details || !d.details.height) return;
-    const f = $("iframe.ig-embed");
-    if (f && f.contentWindow === e.source) { f.style.height = Math.ceil(d.details.height) + "px"; fitCromo(); }
+    const f = $("iframe.ig-embed"), h = Math.ceil(d.details.height);
+    if (!f || f.contentWindow !== e.source || Math.abs(h - igH) < 3) return; // ignora avisos repetidos
+    igH = h; f.style.height = h + "px"; fitCromo();
   });
 
   /* ---------- conciertos ---------- */
