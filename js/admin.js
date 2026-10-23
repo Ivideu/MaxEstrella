@@ -247,10 +247,11 @@
     main = $("#main");
     $$(".tab[data-tab]").forEach((b) => b.addEventListener("click", () => { tab = b.dataset.tab; $$(".tab[data-tab]").forEach((x) => x.classList.toggle("on", x === b)); route(); }));
     $("#out").addEventListener("click", () => sb.auth.signOut());
-    sb.from("inquiries").select("id", { count: "exact", head: true }).then(({ count }) => { if (count) { const q = $("#qcount"); q.textContent = count; q.hidden = false; } });
+    refreshBadge();
     route();
   }
   function route() {
+    closeInq(true);
     if (tab === "settings") return settingsView();
     if (tab === "inquiries") return inquiriesView();
     if (tab === "photos") return photosView();
@@ -371,23 +372,177 @@
     });
   }
 
-  /* ---------- mensajes de contacto ---------- */
+  /* ---------- mensajes de contratación ---------- */
+  let INQ = [], VIEW = [], NAV = [], inqFilter = "all", curId = null, TPL = "";
+  const DRAFTS = {};
+  const isNew = (r) => r.read !== true;
+  const byId = (id) => INQ.find((r) => String(r.id) === String(id));
+  const FILTERS = [["all", "Todos"], ["new", "Sin leer"], ["replied", "Respondidos"]];
+  const inFilter = (r, k) => (k === "new" ? isNew(r) : k === "replied" ? !!r.replied_at : true);
+
+  async function refreshBadge() {
+    const { count, error } = await sb.from("inquiries").select("id", { count: "exact", head: true }).eq("read", false);
+    const q = $("#qcount"); if (!q || error) return;
+    q.textContent = count || ""; q.hidden = !count;
+  }
+
   async function inquiriesView() {
-    main.innerHTML = `<div class="top"><h2>Mensajes</h2></div><p class="hint">Solicitudes enviadas desde el formulario de contacto.</p><div id="l"><p class="empty">Cargando…</p></div>`;
-    const { data, error } = await sb.from("inquiries").select("*").order("created_at", { ascending: false }); if (error) return fail(error);
-    const box = $("#l");
-    if (!data.length) { box.innerHTML = `<p class="empty">No hay mensajes todavía.</p>`; return; }
-    box.className = "list";
-    box.innerHTML = data.map((r) => `<div class="row"><div class="thumb ph">✉</div>
-      <div><div class="t">${esc(r.name)} <span class="tag">${esc(r.kind || "")}</span></div>
-        <div class="s">${esc(fmtTs(r.created_at))} · <a href="mailto:${esc(r.email)}">${esc(r.email)}</a>${r.date_place ? " · " + esc(r.date_place) : ""}</div>
-        <div class="s" style="white-space:pre-wrap;opacity:.9;margin-top:6px">${esc(r.message || "")}</div></div>
-      <div class="acts"><a class="btn ghost sm" href="mailto:${esc(r.email)}?subject=${encodeURIComponent("Re: contacto Max Estrella")}">Responder</a><button class="btn danger sm" data-d="${r.id}">Borrar</button></div></div>`).join("");
-    box.addEventListener("click", async (ev) => {
-      const d = ev.target.closest("[data-d]"); if (!d) return;
-      if (!confirm("¿Borrar este mensaje?")) return;
-      const { error: er } = await sb.from("inquiries").delete().eq("id", d.dataset.d); if (er) return fail(er);
-      toast("Borrado"); inquiriesView();
+    closeInq(true);
+    main.innerHTML = `<div class="top"><h2>Mensajes</h2></div>
+      <p class="hint">Solicitudes enviadas desde el formulario de contratación. Pulsa un mensaje para leerlo en grande y responder por email desde aquí.</p>
+      <div class="mf" id="mf"></div><div id="l"><p class="empty">Cargando…</p></div>`;
+    const { data, error } = await sb.from("inquiries").select("*").order("created_at", { ascending: false });
+    if (error) return fail(error);
+    INQ = data || [];
+    $("#mf").addEventListener("click", (e) => { const b = e.target.closest("[data-f]"); if (b) { inqFilter = b.dataset.f; renderInq(); } });
+    $("#l").addEventListener("click", (e) => {
+      const d = e.target.closest("[data-d]"); if (d) return delInq(d.dataset.d);
+      const row = e.target.closest("[data-o]"); if (row) { NAV = VIEW.map((r) => r.id); openInq(row.dataset.o); }
     });
+    $("#l").addEventListener("keydown", (e) => {
+      if ((e.key === "Enter" || e.key === " ") && e.target.matches(".row.msg")) { e.preventDefault(); NAV = VIEW.map((r) => r.id); openInq(e.target.dataset.o); }
+    });
+    renderInq(); refreshBadge();
+  }
+
+  function renderInq() {
+    const box = $("#l"), mf = $("#mf"); if (!box || !mf) return;
+    mf.innerHTML = FILTERS.map(([k, l]) => `<button class="mf-b${k === inqFilter ? " on" : ""}" data-f="${k}">${l} <span>${INQ.filter((r) => inFilter(r, k)).length}</span></button>`).join("");
+    VIEW = INQ.filter((r) => inFilter(r, inqFilter));
+    if (!INQ.length) { box.className = ""; box.innerHTML = `<p class="empty">No hay mensajes todavía.</p>`; return; }
+    if (!VIEW.length) { box.className = ""; box.innerHTML = `<p class="empty">No hay mensajes en este filtro.</p>`; return; }
+    box.className = "list";
+    box.innerHTML = VIEW.map((r) => `<div class="row msg${isNew(r) ? " unread" : ""}" data-o="${r.id}" tabindex="0" role="button" aria-label="Abrir mensaje de ${esc(r.name)}">
+      <div class="thumb ph">${isNew(r) ? "●" : "✉"}</div>
+      <div><div class="t">${esc(r.name)} <span class="tag">${esc(r.kind || "")}</span>${isNew(r) ? ' <span class="tag star">nuevo</span>' : ""}${r.replied_at ? ' <span class="tag">respondido</span>' : ""}</div>
+        <div class="s">${esc(fmtTs(r.created_at))} · ${esc(r.email)}${r.date_place ? " · " + esc(r.date_place) : ""}</div>
+        <div class="s pv">${esc(r.message || "")}</div></div>
+      <div class="acts"><button class="btn ghost sm" data-o="${r.id}">Abrir</button><button class="btn danger sm" data-d="${r.id}">Borrar</button></div></div>`).join("");
+  }
+
+  async function setRead(r, val) {
+    const { error } = await sb.from("inquiries").update({ read: val }).eq("id", r.id);
+    if (error) { fail(error); return false; }
+    r.read = val; renderInq(); refreshBadge(); return true;
+  }
+  async function loadReplies(id) {
+    const { data, error } = await sb.from("inquiry_replies").select("*").eq("inquiry_id", id).order("created_at", { ascending: true });
+    if (error) { console.error(error); return []; }   // si aún no se ejecutó el SQL, se puede leer igualmente
+    return data || [];
+  }
+  async function delInq(id) {
+    if (!confirm("¿Borrar este mensaje? Se borran también sus respuestas.")) return;
+    const { error } = await sb.from("inquiries").delete().eq("id", id); if (error) return fail(error);
+    INQ = INQ.filter((r) => String(r.id) !== String(id)); delete DRAFTS[id];
+    closeInq(true); renderInq(); refreshBadge(); toast("Borrado");
+  }
+
+  async function openInq(id) {
+    const r = byId(id); if (!r) return;
+    saveDraft();
+    curId = r.id;
+    if (isNew(r)) setRead(r, true);
+    const replies = await loadReplies(r.id);
+    if (curId !== r.id) return;
+    paintInq(r, replies);
+  }
+  function stepInq(d) {
+    if (NAV.length < 2) return;
+    const i = NAV.findIndex((x) => String(x) === String(curId));
+    openInq(NAV[(i + d + NAV.length) % NAV.length]);
+  }
+  function saveDraft() {
+    const ta = $("#rtext");
+    if (ta && curId != null) { const v = ta.value.trim(); if (v && v !== TPL.trim()) DRAFTS[curId] = ta.value; else delete DRAFTS[curId]; }
+  }
+  const dirty = () => { const ta = $("#rtext"); return !!ta && ta.value.trim() !== "" && ta.value.trim() !== TPL.trim(); };
+
+  function paintInq(r, replies) {
+    const i = Math.max(0, NAV.findIndex((x) => String(x) === String(r.id))), n = NAV.length || 1;
+    const first = (r.name || "").trim().split(/\s+/)[0] || "";
+    const greet = `Hola ${first},\n\n`;
+    TPL = `${greet}\n\nUn abrazo,\nMax Estrella`;
+    let host = $("#mm");
+    if (!host) {
+      host = document.createElement("div"); host.id = "mm"; host.className = "mm";
+      host.setAttribute("role", "dialog"); host.setAttribute("aria-modal", "true");
+      document.body.appendChild(host); document.body.style.overflow = "hidden";
+      host.addEventListener("click", (e) => {
+        if (e.target === host || e.target.classList.contains("mm-wrap") || e.target.closest(".mm-x")) return closeInq();
+        const nv = e.target.closest("[data-nav]"); if (nv) return stepInq(Number(nv.dataset.nav));
+        const cur = byId(curId); if (!cur) return;
+        if (e.target.closest("#rsend")) return sendReply(cur);
+        if (e.target.closest("#runread")) return markUnread(cur);
+        if (e.target.closest("#rdel")) return delInq(cur.id);
+      });
+    }
+    const st = r.replied_at ? ["Respondido", "ok"] : isNew(r) ? ["Nuevo", "new"] : ["Leído", ""];
+    const info = [["Recibido", fmtTs(r.created_at)], ["Tipo de evento", r.kind], ["Fecha y lugar", r.date_place]].filter((x) => x[1]);
+    host.innerHTML = `<div class="mm-wrap">
+      <article class="mcard">
+        <header class="mc-top"><span>Max ★ Estrella</span><span class="mc-st ${st[1]}">${st[0]}</span></header>
+        <h3 class="mc-name">${esc(r.name)}</h3>
+        <a class="mc-mail" href="mailto:${esc(r.email)}">${esc(r.email)}</a>
+        <ul class="mc-info">${info.map((x) => `<li><small>${x[0]}</small><span>${esc(x[1])}</span></li>`).join("")}</ul>
+        <div class="mc-body">${esc(r.message || "(sin mensaje)")}</div>
+        ${replies.length ? `<div class="mc-thread"><p class="mc-h">Respuestas enviadas</p>${replies.map((x) => `<div class="mc-reply"><small>${esc(x.sent_by || "La banda")} · ${esc(fmtTs(x.created_at))}</small><p>${esc(x.body)}</p></div>`).join("")}</div>` : ""}
+        <div class="mc-compose">
+          <label for="rtext">${replies.length ? "Enviar otra respuesta" : "Tu respuesta"} <em>(le llegará por email a ${esc(r.email)})</em></label>
+          <textarea id="rtext" rows="8"></textarea>
+          <p class="mc-err" id="rerr" role="alert"></p>
+          <div class="mc-actions">
+            <button class="mbtn" id="rsend" type="button">Enviar respuesta por email</button>
+            <button class="mbtn ghost" id="runread" type="button">Marcar como no leído</button>
+            <button class="mbtn danger" id="rdel" type="button">Borrar</button>
+          </div>
+        </div>
+      </article>
+      ${n > 1 ? `<div class="mm-nav"><button data-nav="-1" aria-label="Mensaje anterior">‹</button><span>${i + 1} / ${n}</span><button data-nav="1" aria-label="Mensaje siguiente">›</button></div>` : ""}
+    </div><button class="mm-x" aria-label="Cerrar">×</button>`;
+    const ta = $("#rtext");
+    ta.value = DRAFTS[r.id] ?? TPL;
+    ta.setSelectionRange(greet.length, greet.length);
+    host.scrollTop = 0;
+  }
+
+  function closeInq(force) {
+    const host = $("#mm"); if (!host) return true;
+    if (!force && dirty() && !confirm("Tienes una respuesta sin enviar. ¿Descartarla?")) return false;
+    if (force) saveDraft(); else delete DRAFTS[curId];
+    host.remove(); document.body.style.overflow = ""; curId = null; return true;
+  }
+  addEventListener("keydown", (e) => {
+    if (!$("#mm")) return;
+    if (e.key === "Escape") closeInq();
+    else if ((e.key === "ArrowLeft" || e.key === "ArrowRight") && !e.target.matches("textarea,input")) stepInq(e.key === "ArrowRight" ? 1 : -1);
+  });
+
+  async function markUnread(r) {
+    if (!closeInq()) return;
+    if (await setRead(r, false)) toast("Marcado como no leído");
+  }
+
+  async function sendReply(r) {
+    const ta = $("#rtext"), err = $("#rerr"), btn = $("#rsend"), text = ta.value.trim();
+    err.textContent = "";
+    if (text.length < 5 || text === TPL.trim()) { err.textContent = "Escribe primero tu respuesta."; ta.focus(); return; }
+    if (!confirm(`Se enviará este email a ${r.email}. ¿Enviar ahora?`)) return;
+    btn.disabled = true; btn.textContent = "Enviando…";
+    try {
+      const { data, error } = await sb.functions.invoke("reply-inquiry", { body: { inquiry_id: r.id, message: text } });
+      if (error) {
+        let m = error.message || String(error);
+        try { const j = await error.context.json(); if (j && j.error) m = j.error; } catch (_) {}
+        if (/Failed to send|not found|404/i.test(m)) m += " (¿está desplegada la función «reply-inquiry»? Mira supabase/LEEME-mensajes.md)";
+        throw new Error(m);
+      }
+      if (data && data.error) throw new Error(data.error);
+      r.read = true; r.replied_at = new Date().toISOString(); delete DRAFTS[r.id];
+      toast("Respuesta enviada ✔"); renderInq(); refreshBadge();
+      paintInq(r, await loadReplies(r.id));
+    } catch (e) {
+      err.textContent = "No se pudo enviar: " + (e.message || e);
+      btn.disabled = false; btn.textContent = "Enviar respuesta por email";
+    }
   }
 })();

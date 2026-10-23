@@ -330,4 +330,4 @@ h2{font-family:var(--display);font-size:clamp(2.4rem,6.4vw,5rem);line-height:.95
 .cromo.past{filter:grayscale(.85) sepia(.3)}
 .cromo.past .cr-date{background:#5b5750}
 
-@media(prefers-reduced-motion:reduce){.cromo-wrap,.cr-photo::after{animation:none!important}}
+@media(prefers-reduced-motion:reduce){.cromo-wrap,.cr-photo::after{animation:none!important}} 
