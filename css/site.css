@@ -91,8 +91,9 @@ h1 b{color:var(--red2);font-weight:400;font-size:.8em;animation:rise 1s var(--ea
 
 /* ---------- SECCIONES ---------- */
 .section{padding:clamp(80px,11vw,140px) 0;position:relative}
-.dark{background:var(--bg)}
-.dark.alt{background:var(--bg2)}
+.dark{background:radial-gradient(ellipse 75% 60% at 80% 12%,rgba(196,40,61,.34),transparent 65%),radial-gradient(ellipse 70% 55% at 8% 92%,rgba(122,16,32,.55),transparent 65%),linear-gradient(180deg,#190a0e,#0d0808 85%)}
+.dark.alt{background:radial-gradient(ellipse 75% 60% at 15% 10%,rgba(196,40,61,.3),transparent 65%),radial-gradient(ellipse 70% 55% at 92% 90%,rgba(122,16,32,.55),transparent 65%),linear-gradient(180deg,#1c0b10,#110909 85%)}
+#banda{background:radial-gradient(ellipse 80% 60% at 50% 0%,rgba(196,40,61,.32),transparent 65%),radial-gradient(ellipse 70% 55% at 90% 95%,rgba(122,16,32,.6),transparent 65%),linear-gradient(180deg,#170a0d,#0b0808)}
 .paper{background:var(--paper);color:var(--ink);background-image:radial-gradient(rgba(0,0,0,.07) 1px,transparent 1.2px);background-size:5px 5px}
 .red{background:var(--red);background-image:radial-gradient(rgba(0,0,0,.2) 1px,transparent 1.2px);background-size:5px 5px}
 .sec-head{margin-bottom:clamp(36px,6vw,64px)}
