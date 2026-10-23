@@ -153,7 +153,7 @@
       <div class="cromo ${b.cls}" id="cromo">${b.html}</div>
       ${L.length > 1 ? `<div class="cr-nav"><button data-cr="-1" aria-label="Anterior">‹</button><span>${pad(idx + 1)} / ${pad(L.length)}</span><button data-cr="1" aria-label="Siguiente">›</button></div>` : ""}
     </div>`);
-    tilt($("#cromo"), b.tilt);
+        if (!$("#cromo iframe")) tilt($("#cromo"), b.tilt);
     fitCromo();
   }
 
