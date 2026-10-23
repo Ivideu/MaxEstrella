@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Max Estrella · Rock en directo desde Madrid</title>
+  <meta name="description" content="Max Estrella: rock en directo desde Madrid. Próximos conciertos, vídeos, fotos, noticias y contacto del grupo.">
+  <meta name="theme-color" content="#0b0909">
+  <meta property="og:title" content="Max Estrella · Rock en directo">
+  <meta property="og:description" content="Canciones que duelen. Canciones que emocionan.">
+  <meta property="og:image" content="images/cartel.jpg">
+  <meta property="og:type" content="website">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='18' fill='%230b0909'/><text x='50' y='72' font-size='64' text-anchor='middle' fill='%23c4283d'>★</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Alfa+Slab+One&family=Inter:wght@400;500;600&family=Oswald:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/site.css">
+</head>
+<body>
+<a class="skip" href="#main">Saltar al contenido</a>
+
+<header class="nav" id="nav">
+  <a class="brand" href="#inicio" aria-label="Max Estrella, inicio">MAX <i>★</i> ESTRELLA</a>
+  <nav id="menu" aria-label="Principal">
+    <a href="#conciertos">Conciertos</a>
+    <a href="#videos">Vídeos</a>
+    <a href="#fotos">Fotos</a>
+    <a href="#noticias">Noticias</a>
+    <a href="#banda">La banda</a>
+    <a href="#contacto" class="pill">contacto</a>
+  </nav>
+  <div class="nav-social" id="social-nav" hidden></div>
+  <button class="burger" id="burger" aria-label="Abrir menú" aria-expanded="false" aria-controls="menu"><span></span><span></span></button>
+</header>
+
+<main id="main">
+
+  <!-- PORTADA -->
+  <section class="hero" id="inicio">
+    <div class="hero-bg" aria-hidden="true"></div>
+    <div class="wrap hero-grid">
+      <div class="hero-text">
+        <p class="kicker"><span class="live"></span> Rock en directo · Madrid</p>
+        <h1 aria-label="Max Estrella">
+          <span class="ln"><span>MAX</span><b>★</b></span>
+          <span class="ln"><span>ESTRELLA</span></span>
+        </h1>
+        <p class="tagline" id="tagline">Canciones que duelen. Canciones que emocionan.</p>
+        <div class="hero-cta">
+          <a class="btn" href="#contacto">Contactar con el grupo</a>
+          <a class="btn ghost" href="#videos"><svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M8 5v14l11-7z" fill="currentColor"/></svg> Ver vídeos</a>
+        </div>
+        <a class="next-show" id="next-show" href="#conciertos" hidden></a>
+      </div>
+      <div class="poster-wrap" id="posterWrap">
+        <div class="poster" id="poster">
+          <img src="images/cartel.jpg" alt="Cartel de Max Estrella en la Sala Fun House" width="623" height="822" fetchpriority="high">
+        </div>
+        <svg class="badge" viewBox="0 0 120 120" aria-hidden="true">
+          <defs><path id="circ" d="M60,60 m-44,0 a44,44 0 1,1 88,0 a44,44 0 1,1 -88,0"/></defs>
+          <circle cx="60" cy="60" r="58" fill="#c4283d"/>
+          <text font-family="Oswald,sans-serif" font-size="12" fill="#eadfc6"><textPath href="#circ" textLength="272" lengthAdjust="spacing">ROCK EN DIRECTO ★ MADRID ★ </textPath></text>
+          <text x="60" y="73" text-anchor="middle" font-size="38" fill="#eadfc6">★</text>
+        </svg>
+      </div>
+    </div>
+    <a class="scroll-hint" href="#conciertos" aria-label="Bajar"><span></span></a>
+  </section>
+
+  <div class="marquee" aria-hidden="true">
+    <div class="track">
+      <span>ROCK EN DIRECTO <i>★</i> MADRID <i>★</i> CANCIONES QUE DUELEN <i>★</i> CANCIONES QUE EMOCIONAN <i>★</i> </span>
+      <span>ROCK EN DIRECTO <i>★</i> MADRID <i>★</i> CANCIONES QUE DUELEN <i>★</i> CANCIONES QUE EMOCIONAN <i>★</i> </span>
+      <span>ROCK EN DIRECTO <i>★</i> MADRID <i>★</i> CANCIONES QUE DUELEN <i>★</i> CANCIONES QUE EMOCIONAN <i>★</i> </span>
+      <span>ROCK EN DIRECTO <i>★</i> MADRID <i>★</i> CANCIONES QUE DUELEN <i>★</i> CANCIONES QUE EMOCIONAN <i>★</i> </span>
+    </div>
+  </div>
+
+  <!-- CONCIERTOS -->
+  <section class="section paper" id="conciertos">
+    <div class="wrap">
+      <header class="sec-head reveal"><p class="eyebrow">Agenda</p><h2>Próximos conciertos</h2></header>
+      <ul class="events" id="events"></ul>
+      <p class="empty reveal" id="events-empty" hidden>Pronto anunciaremos nuevas fechas. ¿Quieres a Max Estrella en tu sala? <a href="#contacto">Escríbenos</a>.</p>
+      <div class="past-wrap" id="past-wrap" hidden>
+        <h3 class="sub reveal">Últimos conciertos</h3>
+        <ul class="events past-list" id="past"></ul>
+        <div class="more"><button class="btn dark-btn" id="past-more" hidden>Ver más conciertos</button></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- VIDEOS -->
+  <section class="section dark" id="videos">
+    <div class="wrap">
+      <header class="sec-head reveal"><p class="eyebrow">En escena y en el estudio</p><h2>Vídeos</h2></header>
+      <div class="vgrid" id="vgrid"></div>
+      <div class="more"><button class="btn ghost" id="vmore" hidden>Ver más vídeos</button></div>
+    </div>
+  </section>
+
+  <!-- FOTOS -->
+  <section class="section dark alt" id="fotos">
+    <div class="wrap">
+      <header class="sec-head reveal"><p class="eyebrow">Galería</p><h2>Fotos</h2></header>
+      <div class="chips" id="chips" role="tablist" aria-label="Filtrar fotos"></div>
+      <div class="masonry" id="masonry"></div>
+      <div class="more"><button class="btn ghost" id="pmore" hidden>Ver más fotos</button></div>
+    </div>
+  </section>
+
+  <!-- NOTICIAS -->
+  <section class="section paper" id="noticias">
+    <div class="wrap">
+      <header class="sec-head reveal"><p class="eyebrow">Lo último</p><h2>Noticias</h2></header>
+      <div class="ngrid" id="ngrid"></div>
+      <p class="empty" id="news-empty" hidden>Todavía no hay noticias. ¡Vuelve pronto!</p>
+      <div class="more"><button class="btn dark-btn" id="nmore" hidden>Ver más noticias</button></div>
+    </div>
+  </section>
+
+  <!-- BANDA -->
+  <section class="section dark" id="banda">
+    <div class="wrap">
+      <header class="sec-head reveal"><p class="eyebrow">Quiénes somos</p><h2>La banda</h2></header>
+      <p class="bio reveal" id="bio"></p>
+      <div class="mgrid" id="mgrid"></div>
+    </div>
+  </section>
+
+  <!-- contacto -->
+  <section class="section red" id="contacto">
+    <div class="wrap contact">
+      <div class="reveal">
+        <p class="eyebrow">Salas · festivales · eventos privados</p>
+        <h2>contacto</h2>
+        <p class="lead">Cuéntanos qué tienes en mente (fecha, lugar y tipo de evento) y te respondemos lo antes posible.</p>
+        <p class="direct" id="direct-mail" hidden>O escríbenos directamente a <a id="mail-link" href="#"></a></p>
+        <div class="social" id="social"></div>
+      </div>
+      <form class="form reveal" id="booking" novalidate>
+        <label>Nombre<input name="name" required autocomplete="name"></label>
+        <label>Email<input name="email" type="email" required autocomplete="email"></label>
+        <label>Tipo de evento
+          <select name="kind">
+            <option>Sala / concierto</option>
+            <option>Festival</option>
+            <option>Fiesta o evento privado</option>
+            <option>Otro</option>
+          </select>
+        </label>
+        <label>Fecha y lugar<input name="date_place" placeholder="Ej. 15 de marzo · Madrid"></label>
+        <label class="full">Mensaje<textarea name="message" rows="5"></textarea></label>
+        <input class="hp" name="website" tabindex="-1" autocomplete="off" aria-hidden="true">
+        <button class="btn light" type="submit">Enviar solicitud</button>
+        <p class="form-msg" id="form-msg" role="status"></p>
+      </form>
+    </div>
+  </section>
+</main>
+
+<footer class="footer">
+  <p class="brand">MAX <i>★</i> ESTRELLA</p>
+  <div class="social" id="social-foot"></div>
+  <p class="small">© <span id="year"></span> Max Estrella · Todos los derechos reservados · <a href="admin.html">Acceso banda</a></p>
+</footer>
+
+<!-- Ficha tipo cromo (vídeos, fotos, noticias, conciertos, banda) -->
+<div class="modal" id="modal" hidden role="dialog" aria-modal="true">
+  <button class="modal-x" aria-label="Cerrar">×</button>
+  <div class="modal-body" id="modal-body"></div>
+</div>
+
+<div class="toast" id="toast" role="status"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/config.js"></script>
+<script src="js/api.js"></script>
+<script src="js/site.js"></script>
+</body>
+</html>
