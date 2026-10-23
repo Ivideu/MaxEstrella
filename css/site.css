@@ -306,6 +306,11 @@ h2{font-family:var(--display);font-size:clamp(2.4rem,6.4vw,5rem);line-height:.95
 .cromo.tall .cr-video{aspect-ratio:9/16;max-height:66vh}
 .cr-video::after{display:none}
 .cr-video iframe{width:100%;height:100%;border:0;display:block}
+
+/* Instagram: la altura la manda el propio embed (se ajusta por JS), sin barra de desplazamiento interior */
+.cromo.tall .cr-video.ig{aspect-ratio:auto;max-height:none;height:auto;background:#fff}
+.cr-video.ig iframe.ig-embed{display:block;width:100%;height:700px;border:0}
+
 .cr-photo .vph{aspect-ratio:16/9}
 .cr-star{position:absolute;right:10px;top:8px;font-style:normal;font-size:1.6rem;color:var(--red2);text-shadow:0 2px 0 var(--ink);z-index:2}
 .cr-cap{text-align:center;margin-top:16px}
@@ -330,4 +335,4 @@ h2{font-family:var(--display);font-size:clamp(2.4rem,6.4vw,5rem);line-height:.95
 .cromo.past{filter:grayscale(.85) sepia(.3)}
 .cromo.past .cr-date{background:#5b5750}
 
-@media(prefers-reduced-motion:reduce){.cromo-wrap,.cr-photo::after{animation:none!important}} 
+@media(prefers-reduced-motion:reduce){.cromo-wrap,.cr-photo::after{animation:none!important}}

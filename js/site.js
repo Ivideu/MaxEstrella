@@ -125,7 +125,7 @@
       const p = parseVideo(v.url), t = esc(v.title || "Vídeo"), u = esc(safe(v.url));
       let cls = "wide", media, extra = "";
       if (p.kind === "youtube") media = `<div class="cr-photo cr-video"><iframe src="https://www.youtube-nocookie.com/embed/${p.id}?autoplay=1&rel=0" title="${t}" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe></div>`;
-      else if (p.kind === "instagram") { cls = "tall"; media = `<div class="cr-photo cr-video"><iframe src="https://www.instagram.com/reel/${p.id}/embed" title="${t}" allow="autoplay; encrypted-media; fullscreen" allowfullscreen></iframe></div>`; }
+      else if (p.kind === "instagram") { cls = "tall"; media = `<div class="cr-photo cr-video ig"><iframe class="ig-embed" scrolling="no" src="https://www.instagram.com/reel/${p.id}/embed" title="${t}" allow="autoplay; encrypted-media; fullscreen" allowfullscreen></iframe></div>`; }
       else if (p.kind === "tiktok") { cls = "tall"; media = `<div class="cr-photo cr-video"><iframe src="https://www.tiktok.com/embed/v2/${p.id}" title="${t}" allow="autoplay; encrypted-media; fullscreen" allowfullscreen></iframe></div>`; }
       else if (p.kind === "mp4") media = `<div class="cr-photo free"><video src="${u}" controls autoplay playsinline></video></div>`;
       else {
@@ -154,7 +154,30 @@
       ${L.length > 1 ? `<div class="cr-nav"><button data-cr="-1" aria-label="Anterior">‹</button><span>${pad(idx + 1)} / ${pad(L.length)}</span><button data-cr="1" aria-label="Siguiente">›</button></div>` : ""}
     </div>`);
     tilt($("#cromo"), b.tilt);
+    fitCromo();
   }
+
+  /* Los cromos verticales (Instagram, TikTok) se reducen para caber en la pantalla, sin barras de desplazamiento */
+  function fitCromo() {
+    const c = $("#cromo"); if (!c) return;
+    c.style.zoom = "";
+    if (!c.classList.contains("tall")) return;
+    const nv = $(".cr-nav", mbody);
+    const avail = innerHeight * 0.96 - 28 - 14 - (nv ? nv.offsetHeight + 20 : 0);
+    const h = c.offsetHeight;
+    if (h > avail) c.style.zoom = Math.max(0.45, avail / h).toFixed(3);
+  }
+  addEventListener("resize", fitCromo);
+
+  /* Instagram avisa de la altura real de su contenido: el iframe se ajusta y desaparece la barra interior */
+  addEventListener("message", (e) => {
+    if (e.origin !== "https://www.instagram.com") return;
+    let d = e.data;
+    if (typeof d === "string") { try { d = JSON.parse(d); } catch (_) { return; } }
+    if (!d || d.type !== "MEASURE" || !d.details || !d.details.height) return;
+    const f = $("iframe.ig-embed");
+    if (f && f.contentWindow === e.source) { f.style.height = Math.ceil(d.details.height) + "px"; fitCromo(); }
+  });
 
   /* ---------- conciertos ---------- */
   function evParts(e) {
