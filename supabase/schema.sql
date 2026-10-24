@@ -133,7 +133,7 @@ create policy "media delete" on storage.objects for delete to authenticated usin
 
 -- ---------- CONTENIDO INICIAL ----------
 insert into public.settings (key, value) values
-  ('hero_tagline', 'Canciones que duelen. Canciones que emocionan.'),
+  ('hero_tagline', 'CANCIONES QUE ENAMORAN. Canciones que emocionan.'),
   ('bio', 'Max Estrella nace de la necesidad de contar lo que a veces no se dice: la soledad, la depresión que no avisa, el dolor que se convierte en canción.'),
   ('contact_email', 'contacto@maxestrella.es')
 on conflict (key) do nothing;

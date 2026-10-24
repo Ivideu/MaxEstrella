@@ -33,7 +33,7 @@
     ],
     news: [
       { id: "n1", title: "Bienvenidos a la nueva web de Max Estrella", body: "Aquí iremos publicando conciertos, vídeos, fotos y todas las novedades del grupo.\n\nEsta noticia es de ejemplo: desde el panel de administración podréis escribir las vuestras, con foto y todo.", image_url: "images/cartel.jpg", published_at: new Date().toISOString() },
-      { id: "n2", title: "Nuevo directo en la Sala Fun House", body: "Una noche de rock con las canciones que duelen y las que emocionan. Noticia de ejemplo.", image_url: "", published_at: new Date(Date.now() - 864e5 * 6).toISOString() }
+      { id: "n2", title: "Nuevo directo en la Sala Fun House", body: "Una noche de rock con las CANCIONES QUE ENAMORAN y las que emocionan. Noticia de ejemplo.", image_url: "", published_at: new Date(Date.now() - 864e5 * 6).toISOString() }
     ],
     videos: [1, 2, 3, 4, 5].map((n) => ({ id: "v" + n, title: `Vídeo ${n} · pendiente de añadir`, url: "", featured: n === 1 })),
     photos: [
@@ -52,7 +52,7 @@
       { id: "m5", name: "Teclados", role: "Integrante", bio: "Aquí irá la frase de cada integrante: quién es, qué toca y qué le mueve. Se edita desde el panel.", photo_url: "images/members/m5.jpg" }
     ],
     settings: {
-      hero_tagline: "Canciones que duelen. Canciones que emocionan.",
+      hero_tagline: "CANCIONES QUE ENAMORAN. Canciones que emocionan.",
       bio: "Max Estrella nace de la necesidad de contar lo que a veces no se dice: la soledad, la depresión que no avisa, el dolor que se convierte en canción.",
       contact_email: C.CONTACT_EMAIL || "",
       instagram: "https://www.instagram.com/max.estrella/"
