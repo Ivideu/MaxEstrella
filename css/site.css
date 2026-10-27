@@ -44,8 +44,8 @@ i{font-style:normal}
 /* ---------- HERO ---------- */
 .hero{position:relative;min-height:calc(100svh - 96px);display:flex;align-items:center;padding:120px 0 90px;overflow:hidden;isolation:isolate}
 .hero-bg{position:absolute;inset:-20px;z-index:-2;background:url(../images/escenario.jpg) var(--px) var(--py)/auto calc(100% * var(--z)) no-repeat;--px:56%;--py:72%;--z:1;will-change:transform;
-  /* “caminar por el escenario”: --mx y --my (-1..1) los mueve el ratón (js/site.js) */
-  transform:perspective(1300px) rotateY(calc(var(--mx,0) * -3.4deg)) rotateX(calc(var(--my,0) * 2deg)) translate3d(calc(var(--mx,0) * -28px),calc(var(--my,0) * -10px),0) scale(1.07)}
+  /* movimiento casi imperceptible: --mx y --my (-1..1) los mueve el ratón (js/site.js). Sube/baja 6px y 3px para más/menos */
+  transform:translate3d(calc(var(--mx,0) * -6px),calc(var(--my,0) * -3px),0) scale(1.03)}
 @media(min-aspect-ratio:21/10){.hero-bg{background-size:cover;--z:1}}
 /* velo: oscurece a la izquierda para que el texto se lea y deja el micro limpio a la derecha */
 .hero-light{position:absolute;inset:0;z-index:-1;pointer-events:none;
@@ -67,7 +67,6 @@ h1 b{color:var(--red2);font-weight:400;font-size:.8em;animation:rise 1s var(--ea
 .next-show:hover{border-color:var(--red2);transform:translateX(4px)}
 .next-show b{font-family:var(--cond);letter-spacing:.14em;text-transform:uppercase;color:var(--red2);font-weight:600}
 
-.badge{position:absolute;width:112px;height:112px;right:max(24px,6vw);bottom:15%;animation:spin 22s linear infinite;filter:drop-shadow(0 8px 18px rgba(0,0,0,.5))}
 .scroll-hint{position:absolute;left:50%;bottom:26px;width:26px;height:42px;border:2px solid rgba(234,223,198,.55);border-radius:14px;transform:translateX(-50%)}
 .scroll-hint span{position:absolute;left:50%;top:8px;width:4px;height:8px;margin-left:-2px;border-radius:2px;background:var(--cream);animation:wheel 1.8s infinite}
 @keyframes wheel{0%{opacity:1;transform:translateY(0)}100%{opacity:0;transform:translateY(14px)}}
@@ -253,8 +252,7 @@ h2{font-family:var(--display);font-size:clamp(2.4rem,6.4vw,5rem);line-height:.95
   .hero-grid{grid-template-columns:1fr;gap:50px;text-align:left}
   .hero-bg{--px:70%;--py:80%;--z:1}
   .hero-light{background:linear-gradient(180deg,rgba(11,9,9,.7) 0%,rgba(11,9,9,.45) 55%,var(--bg) 100%)}
-  .badge{width:84px;height:84px;right:16px;bottom:84px}
-  .contact{grid-template-columns:1fr}
+    .contact{grid-template-columns:1fr}
 }
 @media(max-width:820px){
   .event,.event.past{grid-template-columns:84px 1fr;gap:18px;padding:22px 8px}
