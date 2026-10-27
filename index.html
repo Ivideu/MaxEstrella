@@ -37,13 +37,60 @@
 <main id="main">
 
   <!-- PORTADA -->
-  <section class="hero extras" id="inicio">
+  <section class="hero" id="inicio">
     <div class="hero-bg" aria-hidden="true">
       <div class="stage">
         <div class="beam"></div><div class="pool"></div>
+        <svg class="drums" viewBox="0 0 400 270" fill="none" stroke-linecap="round">
+          <defs>
+            <linearGradient id="shell" x1="0" x2="1"><stop offset="0" stop-color="#241717"/><stop offset=".55" stop-color="#120c0c"/><stop offset="1" stop-color="#070505"/></linearGradient>
+            <radialGradient id="head" cx=".4" cy=".35" r=".8"><stop offset="0" stop-color="#2a1b1b"/><stop offset="1" stop-color="#0b0707"/></radialGradient>
+            <linearGradient id="brass" x1="0" x2="1"><stop offset="0" stop-color="#b08a4a"/><stop offset=".5" stop-color="#6b5128"/><stop offset="1" stop-color="#2d2110"/></linearGradient>
+          </defs>
+          <ellipse cx="200" cy="257" rx="185" ry="9" fill="#000" opacity=".55"/>
+          <g stroke="rgba(234,223,198,.3)" stroke-width="1.6">
+            <path d="M40 256V128M95 256V74M255 256V82M340 256V126M200 256l-26 0M118 256l-8-70M148 256l-10-72M300 256l6-40M338 256l-6-40"/>
+          </g>
+          <g fill="url(#brass)" stroke="rgba(234,223,198,.45)" stroke-width="1.2" opacity=".85">
+            <ellipse cx="40" cy="124" rx="28" ry="4.2"/><ellipse cx="40" cy="132" rx="28" ry="4.2"/>
+            <ellipse cx="95" cy="70" rx="42" ry="6" transform="rotate(-9 95 70)"/>
+            <ellipse cx="255" cy="78" rx="38" ry="5.5" transform="rotate(7 255 78)"/>
+            <ellipse cx="340" cy="122" rx="48" ry="6.5" transform="rotate(5 340 122)"/>
+          </g>
+          <g stroke="rgba(234,223,198,.38)" stroke-width="1.6">
+            <path d="M74 176v26c0 6 72 6 72 0v-26" fill="url(#shell)"/>
+            <ellipse cx="110" cy="176" rx="36" ry="8" fill="url(#head)"/>
+            <path d="M270 168v50c0 6 66 6 66 0v-50" fill="url(#shell)"/>
+            <ellipse cx="303" cy="168" rx="33" ry="8" fill="url(#head)"/>
+            <path d="M140 100v34c0 5 56 5 56 0v-34" fill="url(#shell)"/>
+            <ellipse cx="168" cy="100" rx="28" ry="7" fill="url(#head)"/>
+            <path d="M206 100v34c0 5 52 5 52 0v-34" fill="url(#shell)"/>
+            <ellipse cx="232" cy="100" rx="26" ry="7" fill="url(#head)"/>
+            <path d="M196 96v-8M232 96v-14" />
+            <circle cx="200" cy="190" r="66" fill="url(#shell)"/>
+            <circle cx="200" cy="190" r="56" fill="url(#head)"/>
+            <circle cx="200" cy="190" r="56" stroke="rgba(196,40,61,.55)" stroke-width="2"/>
+          </g>
+          <text x="200" y="208" text-anchor="middle" font-size="52" fill="#c4283d" opacity=".85" font-family="Georgia,serif">★</text>
+        </svg>
+        <svg class="bass" viewBox="0 0 100 330" fill="none" stroke-linecap="round" stroke-linejoin="round">
+          <defs>
+            <radialGradient id="bassBody" cx=".42" cy=".38" r=".85"><stop offset="0" stop-color="#8a1426"/><stop offset=".6" stop-color="#4d0b17"/><stop offset="1" stop-color="#16070a"/></radialGradient>
+          </defs>
+          <ellipse cx="50" cy="322" rx="40" ry="5" fill="#000" opacity=".55"/>
+          <g stroke="rgba(234,223,198,.32)" stroke-width="2"><path d="M50 262v60M50 306L16 324M50 306l34 18M34 270h32"/></g>
+          <g stroke="rgba(234,223,198,.4)" stroke-width="1.4">
+            <path d="M44 6h14l-1 22H45z" fill="#1c1210"/>
+            <rect x="46" y="26" width="8" height="128" fill="#1d1311"/>
+            <path d="M30 168C22 156 24 138 34 136C43 136 46 148 50 156C56 152 64 150 71 154C78 160 74 166 70 170C82 176 82 196 76 206C82 220 80 244 70 258C62 270 38 270 30 258C20 244 18 220 24 206C18 196 18 176 30 168Z" fill="url(#bassBody)"/>
+          </g>
+          <g stroke="rgba(234,223,198,.55)" stroke-width="1.2" fill="#0c0808"><rect x="40" y="188" width="20" height="6"/><rect x="40" y="206" width="20" height="6"/><rect x="38" y="240" width="24" height="5"/></g>
+          <g stroke="rgba(234,223,198,.22)" stroke-width=".7"><path d="M47.5 12V240M50 12V240M52.5 12V240"/></g>
+          <circle cx="42" cy="12" r="1.8" fill="rgba(234,223,198,.5)"/><circle cx="58" cy="12" r="1.8" fill="rgba(234,223,198,.5)"/>
+        </svg>
         <div class="dust"><i></i><i></i><i></i><i></i><i></i></div>
-        <svg class="neon" viewBox="0 0 100 190" fill="none">
-          <path d="M50 0v78" stroke="#6b5a55" stroke-width="2"/>
+        <svg class="neon" viewBox="0 0 100 190" fill="none" overflow="visible">
+          <path d="M50 -600v678" stroke="#6b5a55" stroke-width="2"/>
           <path d="M50 74l9.5 24 25.5 2-19.5 16.5 6.5 25L50 128.5 28 141.5l6.5-25L15 100l25.5-2z" stroke="#ff4a62" stroke-width="5" stroke-linejoin="round"/>
           <path d="M50 74l9.5 24 25.5 2-19.5 16.5 6.5 25L50 128.5 28 141.5l6.5-25L15 100l25.5-2z" stroke="#ffd9de" stroke-width="1.4" stroke-linejoin="round"/>
         </svg>
