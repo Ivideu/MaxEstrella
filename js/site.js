@@ -43,15 +43,24 @@
     $$("main section[id]").forEach((s) => so.observe(s));
   }
 
-  /* ---------- fondo de portada con ligero paralaje ---------- */
+  /* ---------- portada: efecto 3D al pasar el ratón (como caminar por el escenario) ---------- */
   const heroEl = $("#inicio"), heroBg = $(".hero-bg");
   if (heroEl && heroBg && !reduce && matchMedia("(hover:hover)").matches) {
+    let tx = 0, ty = 0, cx = 0, cy = 0, raf = 0;
+    const tick = () => {
+      cx += (tx - cx) * 0.07; cy += (ty - cy) * 0.07;           // suaviza el movimiento
+      heroBg.style.setProperty("--mx", cx.toFixed(3));
+      heroBg.style.setProperty("--my", cy.toFixed(3));
+      raf = (Math.abs(tx - cx) > 0.002 || Math.abs(ty - cy) > 0.002) ? requestAnimationFrame(tick) : 0;
+    };
+    const go = () => { if (!raf) raf = requestAnimationFrame(tick); };
     heroEl.addEventListener("mousemove", (e) => {
       const r = heroEl.getBoundingClientRect();
-      const x = (e.clientX - r.left) / r.width - 0.5, y = (e.clientY - r.top) / r.height - 0.5;
-      heroBg.style.transform = `translate(${(-x * 18).toFixed(1)}px,${(-y * 10).toFixed(1)}px)`;
+      tx = ((e.clientX - r.left) / r.width - 0.5) * 2;
+      ty = ((e.clientY - r.top) / r.height - 0.5) * 2;
+      go();
     });
-    heroEl.addEventListener("mouseleave", () => { heroBg.style.transform = ""; });
+    heroEl.addEventListener("mouseleave", () => { tx = 0; ty = 0; go(); });
   }
 
   /* ---------- ventanas + ficha tipo cromo (común a todo) ---------- */
