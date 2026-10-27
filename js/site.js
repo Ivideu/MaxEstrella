@@ -1,0 +1,384 @@
+(function () {
+  const M = window.MAX;
+  const { esc, safeUrl: safe, parseVideo } = M;
+  const $ = (s, r = document) => r.querySelector(s);
+  const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+  const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  /* ---------- utilidades ---------- */
+  function toast(msg) {
+    const t = $("#toast");
+    t.textContent = msg; t.classList.add("show");
+    clearTimeout(toast.h); toast.h = setTimeout(() => t.classList.remove("show"), 3200);
+  }
+  const io = "IntersectionObserver" in window
+    ? new IntersectionObserver((en) => en.forEach((x) => { if (x.isIntersecting) { x.target.classList.add("in"); io.unobserve(x.target); } }), { threshold: 0.1, rootMargin: "0px 0px -40px 0px" })
+    : null;
+  function reveal(root = document) {
+    $$(".reveal:not(.in)", root).forEach((el, i) => {
+      if (!el.style.getPropertyValue("--i")) el.style.setProperty("--i", i % 6);
+      io ? io.observe(el) : el.classList.add("in");
+    });
+  }
+  const MONTHS = ["ENE", "FEB", "MAR", "ABR", "MAY", "JUN", "JUL", "AGO", "SEP", "OCT", "NOV", "DIC"];
+  const localToday = () => new Date(Date.now() - new Date().getTimezoneOffset() * 6e4).toISOString().slice(0, 10);
+
+  /* ---------- navegación ---------- */
+  const nav = $("#nav"), burger = $("#burger");
+  const onScroll = () => nav.classList.toggle("scrolled", scrollY > 30);
+  addEventListener("scroll", onScroll, { passive: true }); onScroll();
+  burger.addEventListener("click", () => {
+    const open = nav.classList.toggle("open");
+    burger.setAttribute("aria-expanded", open);
+    document.body.style.overflow = open ? "hidden" : "";
+  });
+  $("#menu").addEventListener("click", (e) => {
+    if (e.target.closest("a")) { nav.classList.remove("open"); burger.setAttribute("aria-expanded", false); document.body.style.overflow = ""; }
+  });
+  if (io) {
+    const links = $$("#menu a");
+    const so = new IntersectionObserver((en) => en.forEach((x) => {
+      if (x.isIntersecting) links.forEach((a) => a.setAttribute("aria-current", a.getAttribute("href") === "#" + x.target.id));
+    }), { rootMargin: "-45% 0px -50% 0px" });
+    $$("main section[id]").forEach((s) => so.observe(s));
+  }
+
+  /* ---------- fondo de portada con ligero paralaje ---------- */
+  const heroEl = $("#inicio"), heroBg = $(".hero-bg");
+  if (heroEl && heroBg && !reduce && matchMedia("(hover:hover)").matches) {
+    heroEl.addEventListener("mousemove", (e) => {
+      const r = heroEl.getBoundingClientRect();
+      const x = (e.clientX - r.left) / r.width - 0.5, y = (e.clientY - r.top) / r.height - 0.5;
+      heroBg.style.transform = `translate(${(-x * 18).toFixed(1)}px,${(-y * 10).toFixed(1)}px)`;
+    });
+    heroEl.addEventListener("mouseleave", () => { heroBg.style.transform = ""; });
+  }
+
+  /* ---------- ventanas + ficha tipo cromo (común a todo) ---------- */
+  const modal = $("#modal"), mbody = $("#modal-body");
+  const pad = (x) => String(x).padStart(2, "0");
+  const CUR = { k: null, i: 0 };
+  const LIST = { m: () => MEM, p: () => phView, v: () => VIDS, n: () => NEWS, u: () => UP, e: () => PAST };
+  function closeAll() {
+    modal.hidden = true; mbody.innerHTML = ""; CUR.k = null;
+    if (!nav.classList.contains("open")) document.body.style.overflow = "";
+  }
+  function openModal(html) { mbody.innerHTML = html; modal.hidden = false; document.body.style.overflow = "hidden"; }
+  modal.addEventListener("click", (e) => {
+    if (e.target === modal || e.target === mbody || e.target.classList.contains("cromo-wrap") || e.target.closest(".modal-x")) return closeAll();
+    const b = e.target.closest("[data-cr]");
+    if (b && CUR.k) openCromo(CUR.k, CUR.i + Number(b.dataset.cr));
+  });
+  addEventListener("keydown", (e) => {
+    if (e.key === "Escape") closeAll();
+    if (!modal.hidden && CUR.k) {
+      if (e.key === "ArrowRight") openCromo(CUR.k, CUR.i + 1);
+      if (e.key === "ArrowLeft") openCromo(CUR.k, CUR.i - 1);
+    }
+  });
+  let tx = 0;
+  modal.addEventListener("touchstart", (e) => { tx = e.changedTouches[0].clientX; }, { passive: true });
+  modal.addEventListener("touchend", (e) => {
+    if (!CUR.k) return;
+    const dx = e.changedTouches[0].clientX - tx;
+    if (Math.abs(dx) > 60) openCromo(CUR.k, CUR.i + (dx < 0 ? 1 : -1));
+  });
+  function tilt(c, amt) {
+    if (reduce || !matchMedia("(hover:hover)").matches) return;
+    c.addEventListener("mousemove", (e) => {
+      const r = c.getBoundingClientRect(), x = (e.clientX - r.left) / r.width - 0.5, y = (e.clientY - r.top) / r.height - 0.5;
+      c.style.setProperty("--ry", (x * amt).toFixed(1) + "deg"); c.style.setProperty("--rx", (-y * amt).toFixed(1) + "deg");
+      c.style.setProperty("--sx", (130 - (x + 0.5) * 160).toFixed(0) + "%");
+    });
+    c.addEventListener("mouseleave", () => { c.style.setProperty("--ry", "0deg"); c.style.setProperty("--rx", "0deg"); });
+  }
+
+  const STAR = '<i class="cr-star">★</i>';
+  const frame = (top, media, cap) => `<div class="cr-top"><span>Max ★ Estrella</span><span>${top}</span></div>${media}<div class="cr-cap">${cap}</div>`;
+  const fmtDate = (iso) => new Date(iso).toLocaleDateString("es-ES", { day: "numeric", month: "long", year: "numeric" });
+  const cap1 = (s) => s.charAt(0).toUpperCase() + s.slice(1);
+
+  function fichaEvento(ev, i, n, past) {
+    const { y, m, d, wd } = evParts(ev), tk = past ? "" : safe(ev.ticket_url);
+    const rows = [["Sala", ev.venue], ["Ubicación", ev.city]].filter((r) => r[1]);
+    const media = `<div class="cr-date"><span class="wd">${esc(wd)}</span><b>${d}</b><span class="mo">${MONTHS[m - 1]} ${y}</span>${past ? '<em class="stamp">Finalizado</em>' : ""}</div>`;
+    const cap = `<h3>${esc(ev.title)}</h3>${past ? '<p class="cr-role">Concierto ya celebrado</p>' : ""}
+      ${rows.length ? `<ul class="cr-info">${rows.map((r) => `<li><small>${r[0]}</small><span>${esc(r[1])}</span></li>`).join("")}</ul>` : ""}
+      ${ev.note ? `<p class="cr-bio">${esc(ev.note)}</p>` : ""}
+      ${tk ? `<a class="btn sm" href="${esc(tk)}" target="_blank" rel="noopener">Comprar entradas</a>` : ""}`;
+    return { cls: "ficha" + (past ? " past" : ""), tilt: 12, html: frame(past ? "Directo · pasado" : "Directo · " + pad(i + 1) + "/" + pad(n), media, cap) };
+  }
+
+  const BUILD = {
+    m(m, i, n) {
+      return { cls: "", tilt: 16, html: frame(`Nº ${pad(i + 1)} / ${pad(n)}`,
+        `<div class="cr-photo"><img src="${esc(safe(m.photo_url) || "images/cartel.jpg")}" alt="${esc(m.name)}">${STAR}</div>`,
+        `<h3>${esc(m.name)}</h3>${m.role ? `<p class="cr-role">${esc(m.role)}</p>` : ""}${m.bio ? `<p class="cr-bio">${esc(m.bio)}</p>` : ""}`) };
+    },
+    p(p, i, n) {
+      return { cls: "foto", tilt: 10, html: frame(`Foto ${pad(i + 1)} / ${pad(n)}`,
+        `<div class="cr-photo free"><img src="${esc(safe(p.url))}" alt="${esc(p.caption || "Foto de Max Estrella")}">${STAR}</div>`,
+        `${p.caption ? `<h3>${esc(p.caption)}</h3>` : ""}${p.category ? `<p class="cr-role">${esc(p.category)}</p>` : ""}`) };
+    },
+    v(v, i, n) {
+      const p = parseVideo(v.url), t = esc(v.title || "Vídeo"), u = esc(safe(v.url));
+      let cls = "wide", media, extra = "";
+      if (p.kind === "youtube") media = `<div class="cr-photo cr-video"><iframe src="https://www.youtube-nocookie.com/embed/${p.id}?autoplay=1&rel=0" title="${t}" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe></div>`;
+      else if (p.kind === "instagram") { cls = "tall"; media = `<div class="cr-photo cr-video ig"><iframe class="ig-embed" scrolling="no" src="https://www.instagram.com/reel/${p.id}/embed" title="${t}" allow="autoplay; encrypted-media; fullscreen" allowfullscreen></iframe></div>`; }
+      else if (p.kind === "tiktok") { cls = "tall"; media = `<div class="cr-photo cr-video"><iframe src="https://www.tiktok.com/embed/v2/${p.id}" title="${t}" allow="autoplay; encrypted-media; fullscreen" allowfullscreen></iframe></div>`; }
+      else if (p.kind === "mp4") media = `<div class="cr-photo free"><video src="${u}" controls autoplay playsinline></video></div>`;
+      else {
+        media = `<div class="cr-photo cr-video">${vThumb(v, p)}${STAR}</div>`;
+        extra = p.kind === "link" && u ? `<a class="btn sm" href="${u}" target="_blank" rel="noopener">Abrir enlace</a>` : `<p class="cr-bio">Vídeo de ejemplo: añade el tuyo desde el panel de administración.</p>`;
+      }
+      return { cls, tilt: 6, html: frame(`Vídeo ${pad(i + 1)} / ${pad(n)}`, media, `<h3>${esc(v.title || "")}</h3><p class="cr-role">${PLAT[p.kind]}</p>${extra}`) };
+    },
+    n(nw, i, n) {
+      const img = nw.image_url && safe(nw.image_url);
+      return { cls: "noti", tilt: 8, html: frame(esc(fmtDate(nw.published_at)),
+        img ? `<div class="cr-photo news"><img src="${esc(img)}" alt="">${STAR}</div>` : "",
+        `<h3>${esc(nw.title)}</h3><div class="cr-text">${esc(nw.body || "")}</div>`) };
+    },
+    u: (ev, i, n) => fichaEvento(ev, i, n, false),
+    e: (ev, i, n) => fichaEvento(ev, i, n, true)
+  };
+
+  function openCromo(k, i) {
+    const L = LIST[k](); if (!L.length) return;
+    const idx = (i + L.length) % L.length;
+    CUR.k = k; CUR.i = idx;
+    const b = BUILD[k](L[idx], idx, L.length);
+    openModal(`<div class="cromo-wrap">
+      <div class="cromo ${b.cls}" id="cromo">${b.html}</div>
+      ${L.length > 1 ? `<div class="cr-nav"><button data-cr="-1" aria-label="Anterior">‹</button><span>${pad(idx + 1)} / ${pad(L.length)}</span><button data-cr="1" aria-label="Siguiente">›</button></div>` : ""}
+    </div>`);
+    igH = 0;
+    if ($("#cromo iframe")) $("#cromo").classList.add("nofx");
+    else tilt($("#cromo"), b.tilt);
+    fitCromo();
+  }
+
+  /* Los cromos verticales (Instagram, TikTok) se reducen para caber en la pantalla, sin barras de desplazamiento */
+  function fitCromo() {
+    const c = $("#cromo"); if (!c) return;
+    c.style.zoom = "";
+    if (!c.classList.contains("tall")) return;
+    const nv = $(".cr-nav", mbody);
+    const avail = innerHeight * 0.96 - 28 - 14 - (nv ? nv.offsetHeight + 20 : 0);
+    const h = c.offsetHeight;
+    if (h > avail) c.style.zoom = Math.max(0.45, avail / h).toFixed(3);
+  }
+  addEventListener("resize", fitCromo);
+
+  /* Instagram avisa de la altura real de su contenido: el iframe se ajusta y desaparece la barra interior */
+  let igH = 0;
+  addEventListener("message", (e) => {
+    if (e.origin !== "https://www.instagram.com") return;
+    let d = e.data;
+    if (typeof d === "string") { try { d = JSON.parse(d); } catch (_) { return; } }
+    if (!d || d.type !== "MEASURE" || !d.details || !d.details.height) return;
+    const f = $("iframe.ig-embed"), h = Math.ceil(d.details.height);
+    if (!f || f.contentWindow !== e.source || Math.abs(h - igH) < 3) return; // ignora avisos repetidos
+    igH = h; f.style.height = h + "px"; fitCromo();
+  });
+
+  /* ---------- conciertos ---------- */
+  function evParts(e) {
+    const [y, m, d] = e.date.split("-").map(Number);
+    return { y, m, d, wd: cap1(new Date(y, m - 1, d).toLocaleDateString("es-ES", { weekday: "long" })) };
+  }
+  function evHTML(e, past, i) {
+    const { y, m, d, wd } = evParts(e);
+    const place = [e.venue, e.city].filter(Boolean).join(" · ");
+    const tk = past ? "" : safe(e.ticket_url);
+    return `<li class="event${past ? " past" : ""} reveal" data-g="${past ? "e" : "u"}" data-i="${i}" role="button" tabindex="0" aria-label="Ver ficha: ${esc(e.title)}">
+      <div class="ev-date"><b>${d}</b><span>${MONTHS[m - 1]} ${y}</span></div>
+      <div class="ev-info"><small>${esc(wd)}</small><h3>${esc(e.title)}</h3><p>${esc(place)}</p>${e.note ? `<p class="ev-note">${esc(e.note)}</p>` : ""}</div>
+      <div class="ev-act">${tk ? `<a class="btn sm" href="${esc(tk)}" target="_blank" rel="noopener">Entradas</a>` : ""}${past ? '<span class="ev-stamp">Finalizado</span>' : ""}</div>
+    </li>`;
+  }
+  let UP = [], PAST = [], pastShown = 0;
+  function morePast() {
+    const s = PAST.slice(pastShown, pastShown + 4);
+    $("#past").insertAdjacentHTML("beforeend", s.map((e, k) => evHTML(e, true, pastShown + k)).join(""));
+    pastShown += s.length;
+    $("#past-more").hidden = pastShown >= PAST.length;
+    reveal($("#past"));
+  }
+  $("#past-more").addEventListener("click", morePast);
+  function evOpen(e) {
+    const li = e.target.closest("li.event");
+    if (!li || e.target.closest("a")) return;
+    openCromo(li.dataset.g, +li.dataset.i);
+  }
+  for (const id of ["#events", "#past"]) {
+    $(id).addEventListener("click", evOpen);
+    $(id).addEventListener("keydown", (e) => {
+      if ((e.key === "Enter" || e.key === " ") && e.target.matches("li.event")) { e.preventDefault(); evOpen(e); }
+    });
+  }
+  function renderEvents(events) {
+    const today = localToday();
+    UP = events.filter((e) => e.date >= today).sort((a, b) => a.date.localeCompare(b.date));
+    PAST = events.filter((e) => e.date < today).sort((a, b) => b.date.localeCompare(a.date));
+    $("#events").innerHTML = UP.map((e, i) => evHTML(e, false, i)).join("");
+    $("#events-empty").hidden = UP.length > 0;
+    const ns = $("#next-show");
+    if (UP.length) {
+      const e = UP[0], { m, d } = evParts(e);
+      ns.innerHTML = `<b>Próximo directo</b> ${d} ${MONTHS[m - 1]} · ${esc(e.venue || e.title)} →`;
+      ns.hidden = false;
+    }
+    pastShown = 0; $("#past").innerHTML = ""; morePast();
+    $("#past-wrap").hidden = !PAST.length;
+  }
+
+  /* ---------- vídeos ---------- */
+  const PLAT = { youtube: "YouTube", instagram: "Instagram", tiktok: "TikTok", mp4: "Vídeo", link: "Enlace", demo: "Próximamente" };
+  let VIDS = [], vShown = 0;
+  const VPAGE = 6;
+  function vThumb(v, p) {
+    if (v.poster_url && safe(v.poster_url)) return `<img src="${esc(safe(v.poster_url))}" alt="" loading="lazy">`;
+    if (p.kind === "youtube") return `<img src="https://i.ytimg.com/vi/${p.id}/hqdefault.jpg" alt="" loading="lazy">`;
+    if (p.kind === "mp4") return `<video src="${esc(safe(v.url))}#t=0.8" preload="metadata" muted playsinline></video>`;
+    return `<div class="vph">${PLAT[p.kind]}</div>`;
+  }
+  function renderVideos() {
+    const g = $("#vgrid");
+    const slice = VIDS.slice(vShown, vShown + VPAGE);
+    g.insertAdjacentHTML("beforeend", slice.map((v, k) => {
+      const i = vShown + k, p = parseVideo(v.url);
+      return `<button class="cc vc reveal" data-i="${i}" aria-label="Ver vídeo: ${esc(v.title || "vídeo")}">
+        <div class="vt">${vThumb(v, p)}</div>
+        ${v.featured ? '<i class="cc-star" title="Destacado">★</i>' : ""}
+        <span class="mhint">Ver vídeo</span>
+        <span class="vplay"><svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true"><path d="M8 5v14l11-7z" fill="currentColor"/></svg></span>
+        <div class="cc-meta"><h3>${esc(v.title || "")}</h3><p class="cc-pill">${PLAT[p.kind]}</p></div>
+      </button>`;
+    }).join(""));
+    vShown += slice.length;
+    $("#vmore").hidden = vShown >= VIDS.length;
+    reveal(g);
+  }
+  $("#vgrid").addEventListener("click", (e) => { const b = e.target.closest(".cc"); if (b) openCromo("v", +b.dataset.i); });
+  $("#vmore").addEventListener("click", renderVideos);
+
+  /* ---------- fotos ---------- */
+  let PH = [], phView = [], phShown = 0, phCat = "Todas";
+  const PPAGE = 12;
+  function renderChips() {
+    const cats = ["Todas", ...new Set(PH.map((p) => (p.category || "").trim()).filter(Boolean))];
+    const c = $("#chips");
+    c.hidden = cats.length < 3;
+    c.innerHTML = cats.map((k) => `<button class="chip${k === phCat ? " on" : ""}" data-c="${esc(k)}" role="tab" aria-selected="${k === phCat}">${esc(k)}</button>`).join("");
+  }
+  function resetPhotos() {
+    phView = phCat === "Todas" ? PH : PH.filter((p) => (p.category || "").trim() === phCat);
+    phShown = 0; $("#masonry").innerHTML = ""; morePhotos();
+  }
+  function morePhotos() {
+    const slice = phView.slice(phShown, phShown + PPAGE);
+    $("#masonry").insertAdjacentHTML("beforeend", slice.map((p, k) => {
+      const meta = p.caption || p.category;
+      return `<button class="cc ph${meta ? "" : " nometa"} reveal" data-i="${phShown + k}" aria-label="Ver foto${p.caption ? ": " + esc(p.caption) : ""}">
+        <img src="${esc(safe(p.url))}" alt="${esc(p.caption || "Foto de Max Estrella")}" loading="lazy">
+        <span class="mhint">Ver foto</span>
+        ${meta ? `<div class="cc-meta">${p.caption ? `<h3>${esc(p.caption)}</h3>` : ""}${p.category ? `<p class="cc-pill">${esc(p.category)}</p>` : ""}</div>` : ""}
+      </button>`;
+    }).join(""));
+    phShown += slice.length;
+    $("#pmore").hidden = phShown >= phView.length;
+    reveal($("#masonry"));
+  }
+  $("#chips").addEventListener("click", (e) => {
+    const b = e.target.closest(".chip"); if (!b) return;
+    phCat = b.dataset.c; renderChips(); resetPhotos();
+  });
+  $("#pmore").addEventListener("click", morePhotos);
+  $("#masonry").addEventListener("click", (e) => { const b = e.target.closest(".cc"); if (b) openCromo("p", +b.dataset.i); });
+
+  /* ---------- noticias ---------- */
+  let NEWS = [], nShown = 0;
+  function renderNews() {
+    const g = $("#ngrid");
+    const slice = NEWS.slice(nShown, nShown + 6);
+    g.insertAdjacentHTML("beforeend", slice.map((n, k) => {
+      const ex = (n.body || "").replace(/\s+/g, " ").slice(0, 100);
+      const img = n.image_url && safe(n.image_url);
+      return `<button class="cc nc reveal" data-i="${nShown + k}" aria-label="Leer noticia: ${esc(n.title)}">
+        <div class="vt">${img ? `<img src="${esc(img)}" alt="" loading="lazy">` : '<div class="nc-ph">★</div>'}</div>
+        <div class="nc-body"><time>${esc(fmtDate(n.published_at))}</time><h3>${esc(n.title)}</h3>${ex ? `<p class="nc-ex">${esc(ex)}${(n.body || "").length > 100 ? "…" : ""}</p>` : ""}<span class="nc-rm">Leer más →</span></div>
+      </button>`;
+    }).join(""));
+    nShown += slice.length;
+    $("#nmore").hidden = nShown >= NEWS.length;
+    $("#news-empty").hidden = NEWS.length > 0;
+    reveal(g);
+  }
+  $("#ngrid").addEventListener("click", (e) => { const b = e.target.closest(".cc"); if (b) openCromo("n", +b.dataset.i); });
+  $("#nmore").addEventListener("click", renderNews);
+
+  /* ---------- banda ---------- */
+  let MEM = [];
+  function renderMembers(ms) {
+    MEM = ms;
+    $("#mgrid").innerHTML = ms.map((m, i) => `<button class="cc mc reveal" data-i="${i}" aria-label="Ver la ficha de ${esc(m.name)}"><img src="${esc(safe(m.photo_url) || "images/cartel.jpg")}" alt="${esc(m.name)}" loading="lazy"><span class="mhint">Ver ficha</span><div class="cc-meta"><h3>${esc(m.name)}</h3>${m.role ? `<p class="cc-pill">${esc(m.role)}</p>` : ""}</div></button>`).join("");
+  }
+  $("#mgrid").addEventListener("click", (e) => { const b = e.target.closest(".cc"); if (b) openCromo("m", +b.dataset.i); });
+
+  /* ---------- contacto / redes ---------- */
+  const ICON = {
+    instagram: '<rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.2" cy="6.8" r=".7" fill="currentColor"/>',
+    youtube: '<rect x="2.5" y="5.5" width="19" height="13" rx="4"/><path d="M10 9.4v5.2l4.4-2.6z" fill="currentColor"/>',
+    tiktok: '<path d="M14 3v11.2a3.6 3.6 0 1 1-3.6-3.6"/><path d="M14 3c.3 2.5 1.9 4.1 4.5 4.3"/>',
+    facebook: '<path d="M14.5 21v-8h2.6l.4-3h-3V8.1c0-.9.3-1.5 1.6-1.5h1.5V3.9c-.3 0-1.2-.1-2.2-.1-2.3 0-3.800 1.400-3.800 3.900V10H8.500v3h2.600v8z"/>',
+    spotify: '<circle cx="12" cy="12" r="9"/><path d="M7 9.6c3.6-1 7.200-.7 10.200 1.100M7.700 12.900c2.900-.8 5.700-.5 8.100 1M8.400 15.900c2.200-.6 4.300-.4 6.200.7"/>'
+  };
+  const SOCIAL = { instagram: "Instagram", youtube: "YouTube", tiktok: "TikTok", facebook: "Facebook", spotify: "Spotify" };
+  function renderSettings(S) {
+    if (S.hero_tagline) $("#tagline").textContent = S.hero_tagline;
+    $("#bio").textContent = S.bio || "";
+    const links = Object.keys(SOCIAL).filter((k) => safe(S[k])).map((k) => `<a href="${esc(safe(S[k]))}" target="_blank" rel="noopener">${SOCIAL[k]}</a>`).join("");
+    $("#social").innerHTML = links; $("#social-foot").innerHTML = links;
+    const icons = Object.keys(SOCIAL).filter((k) => safe(S[k])).map((k) => `<a href="${esc(safe(S[k]))}" target="_blank" rel="noopener" aria-label="${SOCIAL[k]}" title="${SOCIAL[k]}"><svg viewBox="0 0 24 24" aria-hidden="true">${ICON[k]}</svg></a>`).join("");
+    $("#social-nav").innerHTML = icons; $("#social-nav").hidden = !icons;
+    const mail = S.contact_email || M.config.CONTACT_EMAIL;
+    if (mail) { $("#direct-mail").hidden = false; const a = $("#mail-link"); a.textContent = mail; a.href = "mailto:" + mail; }
+    window.__mail = mail;
+  }
+  $("#booking").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const f = e.target, d = Object.fromEntries(new FormData(f)), msg = $("#form-msg"), btn = f.querySelector("button");
+    msg.className = "form-msg";
+    if (d.website) { msg.textContent = "¡Gracias!"; return; } // anti-spam
+    if (!d.name.trim() || !/^\S+@\S+\.\S+$/.test(d.email)) { msg.textContent = "Escribe tu nombre y un email válido."; msg.classList.add("err"); return; }
+    if (M.live) {
+      btn.disabled = true; msg.textContent = "Enviando…";
+      const { error } = await M.sb.from("inquiries").insert({ name: d.name, email: d.email, kind: d.kind, date_place: d.date_place, message: d.message });
+      btn.disabled = false;
+      if (error) { msg.textContent = "No se pudo enviar. Inténtalo de nuevo o escríbenos por email."; msg.classList.add("err"); return; }
+      msg.textContent = "¡Mensaje enviado! Te responderemos muy pronto."; msg.classList.add("ok"); f.reset();
+    } else {
+      const body = `Nombre: ${d.name}\nEmail: ${d.email}\nTipo: ${d.kind}\nFecha y lugar: ${d.date_place}\n\n${d.message}`;
+      location.href = `mailto:${window.__mail || ""}?subject=${encodeURIComponent("Contratación Max Estrella")}&body=${encodeURIComponent(body)}`;
+      msg.textContent = "Se abrirá tu correo con el mensaje listo (modo demo)."; msg.classList.add("ok");
+    }
+  });
+  $("#year").textContent = new Date().getFullYear();
+
+  /* ---------- carga ---------- */
+  async function init() {
+    reveal();
+    const [events, videos, photos, news, members, S] = await Promise.all([M.get("events"), M.get("videos"), M.get("photos"), M.get("news"), M.get("members"), M.settings()]);
+    renderSettings(S);
+    renderEvents(events);
+    VIDS = videos; vShown = 0; $("#vgrid").innerHTML = "";
+    if (VIDS.length) renderVideos(); else $("#vgrid").innerHTML = '<p class="empty">Muy pronto, vídeos nuevos.</p>';
+    PH = photos; renderChips(); resetPhotos();
+    if (!PH.length) $("#masonry").innerHTML = '<p class="empty">Muy pronto, fotos nuevas.</p>';
+    NEWS = news; nShown = 0; $("#ngrid").innerHTML = ""; renderNews();
+    renderMembers(members);
+    reveal();
+  }
+  init();
+})();
