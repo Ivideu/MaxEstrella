@@ -43,13 +43,14 @@ i{font-style:normal}
 
 /* ---------- HERO ---------- */
 .hero{position:relative;min-height:calc(100svh - 96px);display:flex;align-items:center;padding:120px 0 90px;overflow:hidden;isolation:isolate}
-.hero-bg{position:absolute;inset:-20px;z-index:-2;background:url(../images/escenario.jpg) var(--px) var(--py)/cover no-repeat;container-type:size;--px:45%;--py:70%;transition:transform .5s ease-out;will-change:transform}
+.hero-bg{position:absolute;inset:-20px;z-index:-2;background:url(../images/escenario.jpg) var(--px) var(--py)/auto calc(100% * var(--z)) no-repeat;container-type:size;--px:56%;--py:72%;--z:1;transition:transform .5s ease-out;will-change:transform}
+@media(min-aspect-ratio:21/10){.hero-bg{background-size:cover;--z:1}}
 /* velo: oscurece a la izquierda para que el texto se lea y deja el micro limpio a la derecha */
 .hero-light{position:absolute;inset:0;z-index:-1;pointer-events:none;
-  background:linear-gradient(90deg,rgba(11,9,9,.66) 0%,rgba(11,9,9,.34) 45%,transparent 68%),linear-gradient(180deg,rgba(11,9,9,.55) 0%,transparent 22%,transparent 70%,var(--bg) 99%),radial-gradient(ellipse at 100% 0%,rgba(196,40,61,.28),transparent 55%)}
+  background:linear-gradient(90deg,rgba(11,9,9,.66) 0%,rgba(11,9,9,.34) 45%,transparent 68%),linear-gradient(180deg,rgba(11,9,9,.55) 0%,transparent 22%,transparent 70%,var(--bg) 99%),radial-gradient(ellipse at 100% 0%,rgba(196,40,61,.3),transparent 55%),radial-gradient(ellipse 55% 62% at 0% 100%,rgba(11,9,9,.8),transparent 78%)}
 /* ---------- EXTRAS DE ESCENARIO (opcional: añade class="extras" a <section class="hero">) ---------- */
 .stage{display:none}
-.hero.extras .stage{display:block;position:absolute;width:max(100cqw,217.3cqh);aspect-ratio:1558/717;left:var(--px);top:var(--py);transform:translate(calc(var(--px)*-1),calc(var(--py)*-1));pointer-events:none}
+.hero.extras .stage{display:block;position:absolute;width:max(100cqw,calc(217.3cqh * var(--z)));aspect-ratio:1558/717;left:var(--px);top:var(--py);transform:translate(calc(var(--px)*-1),calc(var(--py)*-1));pointer-events:none}
 /* foco de luz sobre el micro */
 .stage .beam{position:absolute;left:70.2%;top:-2%;width:36%;height:102%;transform:translateX(-50%);mix-blend-mode:screen;filter:blur(7px);
   background:linear-gradient(180deg,rgba(255,238,214,.22),rgba(255,226,190,.09) 60%,rgba(255,226,190,.02));
@@ -266,7 +267,7 @@ h2{font-family:var(--display);font-size:clamp(2.4rem,6.4vw,5rem);line-height:.95
 }
 @media(max-width:960px){
   .hero-grid{grid-template-columns:1fr;gap:50px;text-align:left}
-  .hero-bg{--px:68%;--py:80%}
+  .hero-bg{--px:70%;--py:80%;--z:1}
   .hero-light{background:linear-gradient(180deg,rgba(11,9,9,.7) 0%,rgba(11,9,9,.45) 55%,var(--bg) 100%)}
   .badge{width:84px;height:84px;right:16px;bottom:84px}
   .contact{grid-template-columns:1fr}
