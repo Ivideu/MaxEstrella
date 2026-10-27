@@ -43,12 +43,12 @@
     $$("main section[id]").forEach((s) => so.observe(s));
   }
 
-  /* ---------- portada: efecto 3D al pasar el ratón (como caminar por el escenario) ---------- */
+  /* ---------- portada: movimiento casi imperceptible del fondo con el ratón ---------- */
   const heroEl = $("#inicio"), heroBg = $(".hero-bg");
   if (heroEl && heroBg && !reduce && matchMedia("(hover:hover)").matches) {
     let tx = 0, ty = 0, cx = 0, cy = 0, raf = 0;
     const tick = () => {
-      cx += (tx - cx) * 0.07; cy += (ty - cy) * 0.07;           // suaviza el movimiento
+      cx += (tx - cx) * 0.04; cy += (ty - cy) * 0.04;           // suaviza el movimiento
       heroBg.style.setProperty("--mx", cx.toFixed(3));
       heroBg.style.setProperty("--my", cy.toFixed(3));
       raf = (Math.abs(tx - cx) > 0.002 || Math.abs(ty - cy) > 0.002) ? requestAnimationFrame(tick) : 0;
