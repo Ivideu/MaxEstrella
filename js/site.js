@@ -43,16 +43,15 @@
     $$("main section[id]").forEach((s) => so.observe(s));
   }
 
-  /* ---------- cartel con efecto 3D ---------- */
-  const pw = $("#posterWrap"), poster = $("#poster");
-  if (!reduce && matchMedia("(hover:hover)").matches) {
-    pw.addEventListener("mousemove", (e) => {
-      const r = pw.getBoundingClientRect();
+  /* ---------- fondo de portada con ligero paralaje ---------- */
+  const heroEl = $("#inicio"), heroBg = $(".hero-bg");
+  if (heroEl && heroBg && !reduce && matchMedia("(hover:hover)").matches) {
+    heroEl.addEventListener("mousemove", (e) => {
+      const r = heroEl.getBoundingClientRect();
       const x = (e.clientX - r.left) / r.width - 0.5, y = (e.clientY - r.top) / r.height - 0.5;
-      poster.style.setProperty("--ry", (x * 14).toFixed(2) + "deg");
-      poster.style.setProperty("--rx", (-y * 14).toFixed(2) + "deg");
+      heroBg.style.transform = `translate(${(-x * 18).toFixed(1)}px,${(-y * 10).toFixed(1)}px)`;
     });
-    pw.addEventListener("mouseleave", () => { poster.style.setProperty("--ry", "0deg"); poster.style.setProperty("--rx", "0deg"); });
+    heroEl.addEventListener("mouseleave", () => { heroBg.style.transform = ""; });
   }
 
   /* ---------- ventanas + ficha tipo cromo (común a todo) ---------- */

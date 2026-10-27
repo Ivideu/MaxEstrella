@@ -38,7 +38,18 @@
 
   <!-- PORTADA -->
   <section class="hero" id="inicio">
-    <div class="hero-bg" aria-hidden="true"></div>
+    <div class="hero-bg" aria-hidden="true">
+      <div class="stage">
+        <div class="beam"></div><div class="pool"></div>
+        <div class="dust"><i></i><i></i><i></i><i></i><i></i></div>
+        <svg class="neon" viewBox="0 0 100 190" fill="none">
+          <path d="M50 0v78" stroke="#6b5a55" stroke-width="2"/>
+          <path d="M50 74l9.5 24 25.5 2-19.5 16.5 6.5 25L50 128.5 28 141.5l6.5-25L15 100l25.5-2z" stroke="#ff4a62" stroke-width="5" stroke-linejoin="round"/>
+          <path d="M50 74l9.5 24 25.5 2-19.5 16.5 6.5 25L50 128.5 28 141.5l6.5-25L15 100l25.5-2z" stroke="#ffd9de" stroke-width="1.4" stroke-linejoin="round"/>
+        </svg>
+      </div>
+    </div>
+    <div class="hero-light" aria-hidden="true"></div>
     <div class="wrap hero-grid">
       <div class="hero-text">
         <p class="kicker"><span class="live"></span> Rock en directo · Madrid</p>
@@ -53,18 +64,13 @@
         </div>
         <a class="next-show" id="next-show" href="#conciertos" hidden></a>
       </div>
-      <div class="poster-wrap" id="posterWrap">
-        <div class="poster" id="poster">
-          <img src="images/cartel.jpg" alt="Cartel de Max Estrella en la Sala Fun House" width="623" height="822" fetchpriority="high">
-        </div>
-        <svg class="badge" viewBox="0 0 120 120" aria-hidden="true">
-          <defs><path id="circ" d="M60,60 m-44,0 a44,44 0 1,1 88,0 a44,44 0 1,1 -88,0"/></defs>
-          <circle cx="60" cy="60" r="58" fill="#c4283d"/>
-          <text font-family="Oswald,sans-serif" font-size="12" fill="#eadfc6"><textPath href="#circ" textLength="272" lengthAdjust="spacing">ROCK EN DIRECTO ★ MADRID ★ </textPath></text>
-          <text x="60" y="73" text-anchor="middle" font-size="38" fill="#eadfc6">★</text>
-        </svg>
-      </div>
     </div>
+    <svg class="badge" viewBox="0 0 120 120" aria-hidden="true">
+      <defs><path id="circ" d="M60,60 m-44,0 a44,44 0 1,1 88,0 a44,44 0 1,1 -88,0"/></defs>
+      <circle cx="60" cy="60" r="58" fill="#c4283d"/>
+      <text font-family="Oswald,sans-serif" font-size="12" fill="#eadfc6"><textPath href="#circ" textLength="272" lengthAdjust="spacing">ROCK EN DIRECTO ★ MADRID ★ </textPath></text>
+      <text x="60" y="73" text-anchor="middle" font-size="38" fill="#eadfc6">★</text>
+    </svg>
     <a class="scroll-hint" href="#conciertos" aria-label="Bajar"><span></span></a>
   </section>
 
