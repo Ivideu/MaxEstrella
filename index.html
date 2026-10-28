@@ -14,7 +14,7 @@
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='18' fill='%230b0909'/><text x='50' y='72' font-size='64' text-anchor='middle' fill='%23c4283d'>★</text></svg>">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Alfa+Slab+One&family=Inter:wght@400;500;600&family=Oswald:wght@400;500;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Alfa+Slab+One&family=Inter:wght@400;500;600&family=Lora:ital,wght@0,400;0,500;1,400&family=Oswald:wght@400;500;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/site.css">
 </head>
 <body>
@@ -24,10 +24,10 @@
   <a class="brand" href="#inicio" aria-label="Max Estrella, inicio">MAX <i>★</i> ESTRELLA</a>
   <nav id="menu" aria-label="Principal">
     <a href="#conciertos">Conciertos</a>
+    <a href="#noticias">Noticias</a>
     <a href="#musica">Música</a>
     <a href="#videos">Vídeos</a>
     <a href="#fotos">Fotos</a>
-    <a href="#noticias">Noticias</a>
     <a href="#banda">La banda</a>
     <a href="#contacto" class="pill">contacto</a>
   </nav>
@@ -68,65 +68,98 @@
     </div>
   </div>
 
-  <!-- CONCIERTOS -->
+  <!-- CONCIERTOS (texto a la derecha) -->
   <section class="section paper" id="conciertos">
-    <div class="wrap">
-      <header class="sec-head reveal"><p class="eyebrow">Agenda</p><h2>Próximos conciertos</h2></header>
-      <ul class="events" id="events"></ul>
-      <p class="empty reveal" id="events-empty" hidden>Pronto anunciaremos nuevas fechas. ¿Quieres a Max Estrella en tu sala? <a href="#contacto">Escríbenos</a>.</p>
-      <div class="past-wrap" id="past-wrap" hidden>
-        <h3 class="sub reveal">Últimos conciertos</h3>
-        <ul class="events past-list" id="past"></ul>
-        <div class="more"><button class="btn dark-btn" id="past-more" hidden>Ver más conciertos</button></div>
+    <div class="wrap split flip">
+      <header class="side reveal">
+        <h2>Conciertos</h2><span class="rule"></span>
+        <p class="blurb">Salas, festivales y eventos privados. Mira dónde tocamos y cómo fueron los últimos directos.</p>
+        <a class="btn dark-btn" href="#contacto">Contratar al grupo</a>
+      </header>
+      <div class="main-col">
+        <ul class="events" id="events"></ul>
+        <p class="empty reveal" id="events-empty" hidden>Pronto anunciaremos nuevas fechas. ¿Quieres a Max Estrella en tu sala? <a href="#contacto">Escríbenos</a>.</p>
+        <div class="past-wrap" id="past-wrap" hidden>
+          <h3 class="sub reveal">Últimos conciertos</h3>
+          <ul class="events past-list" id="past"></ul>
+          <div class="more"><button class="btn dark-btn" id="past-more" hidden>Ver más conciertos</button></div>
+        </div>
       </div>
     </div>
   </section>
 
-  <!-- MÚSICA -->
-  <section class="section dark" id="musica">
-    <div class="wrap">
-      <header class="sec-head reveal"><p class="eyebrow">Escúchanos</p><h2>Música</h2></header>
-      <div class="tgrid" id="tgrid"></div>
-      <div class="more" id="spotify-more" hidden><a class="btn ghost" id="spotify-link" href="#" target="_blank" rel="noopener">Escuchar todo en Spotify</a></div>
+  <!-- NOTICIAS (texto a la derecha) -->
+  <section class="section paper" id="noticias">
+    <div class="wrap split flip">
+      <header class="side reveal">
+        <h2>Noticias</h2><span class="rule"></span>
+        <p class="blurb">Lo último del grupo: conciertos, lanzamientos y novedades.</p>
+        <button class="btn dark-btn" id="nmore" hidden>Ver más noticias</button>
+      </header>
+      <div class="main-col">
+        <div class="ngrid" id="ngrid"></div>
+        <p class="empty" id="news-empty" hidden>Todavía no hay noticias. ¡Vuelve pronto!</p>
+      </div>
     </div>
   </section>
 
-  <!-- VIDEOS -->
-  <section class="section dark" id="videos">
-    <div class="wrap">
-      <header class="sec-head reveal"><p class="eyebrow">En escena y en el estudio</p><h2>Vídeos</h2></header>
+  <!-- MÚSICA: 4 canciones + "ver toda la música" -->
+  <section class="section strip dark flat" id="musica">
+    <div class="wrap split">
+      <header class="side reveal">
+        <h2>Música</h2><span class="rule"></span>
+        <p class="blurb">Canciones que nacen de la vida, de lo que sentimos y de lo que nos rodea.</p>
+        <button class="btn-line" id="tmore" type="button" hidden>Ver toda la música <span aria-hidden="true">→</span></button>
+        <div class="side-btn" id="spotify-more" hidden><a class="btn-line" id="spotify-link" href="#" target="_blank" rel="noopener">Escuchar en Spotify <span aria-hidden="true">→</span></a></div>
+      </header>
+      <div class="main-col"><div class="tgrid" id="tgrid"></div></div>
+    </div>
+  </section>
+
+  <!-- VÍDEOS: imagen a pantalla completa a la izquierda, texto a la derecha -->
+  <section class="section strip bleed dark flat deep" id="videos">
+    <div class="band">
+      <button class="band-img" id="vhero" type="button" aria-label="Ver vídeo destacado"></button>
+      <div class="band-text">
+        <h2>Vídeos</h2><span class="rule"></span>
+        <p class="blurb">Imágenes que cuentan lo que somos. En el estudio, en directo, en la carretera… y en la vida.</p>
+        <button class="btn-line" id="vtoggle" type="button" aria-expanded="false" aria-controls="vall">Ver todos los vídeos <span aria-hidden="true">→</span></button>
+      </div>
+    </div>
+    <div class="wrap vall" id="vall" hidden>
       <div class="vgrid" id="vgrid"></div>
       <div class="more"><button class="btn ghost" id="vmore" hidden>Ver más vídeos</button></div>
     </div>
   </section>
 
-  <!-- FOTOS -->
-  <section class="section dark alt" id="fotos">
-    <div class="wrap">
-      <header class="sec-head reveal"><p class="eyebrow">Galería</p><h2>Fotos</h2></header>
+  <!-- FOTOS: banda clara, texto a la izquierda y 3 fotos -->
+  <section class="section strip stone" id="fotos">
+    <div class="wrap split">
+      <header class="side reveal">
+        <h2>Fotos</h2><span class="rule"></span>
+        <p class="blurb">Momentos, lugares, personas. La mirada detrás de cada canción.</p>
+        <button class="btn-line" id="gtoggle" type="button" aria-expanded="false" aria-controls="gall">Ver galería <span aria-hidden="true">→</span></button>
+      </header>
+      <div class="main-col"><div class="pgrid" id="pprev"></div></div>
+    </div>
+    <div class="wrap gall" id="gall" hidden>
       <div class="chips" id="chips" role="tablist" aria-label="Filtrar fotos"></div>
       <div class="masonry" id="masonry"></div>
-      <div class="more"><button class="btn ghost" id="pmore" hidden>Ver más fotos</button></div>
+      <div class="more"><button class="btn dark-btn" id="pmore" hidden>Ver más fotos</button></div>
     </div>
   </section>
 
-  <!-- NOTICIAS -->
-  <section class="section paper" id="noticias">
-    <div class="wrap">
-      <header class="sec-head reveal"><p class="eyebrow">Lo último</p><h2>Noticias</h2></header>
-      <div class="ngrid" id="ngrid"></div>
-      <p class="empty" id="news-empty" hidden>Todavía no hay noticias. ¡Vuelve pronto!</p>
-      <div class="more"><button class="btn dark-btn" id="nmore" hidden>Ver más noticias</button></div>
+  <!-- LA BANDA: foto a pantalla completa a la izquierda, texto a la derecha -->
+  <section class="section strip bleed dark flat" id="banda">
+    <div class="band">
+      <div class="band-img static"><img src="images/banda-hero.jpg" alt="Max Estrella, la banda" loading="lazy"></div>
+      <div class="band-text">
+        <h2>La banda</h2><span class="rule"></span>
+        <p class="bio" id="bio"></p>
+        <button class="btn-line" id="btoggle" type="button" aria-expanded="false" aria-controls="ball">Conoce a la banda <span aria-hidden="true">→</span></button>
+      </div>
     </div>
-  </section>
-
-  <!-- BANDA -->
-  <section class="section dark" id="banda">
-    <div class="wrap">
-      <header class="sec-head reveal"><p class="eyebrow">Quiénes somos</p><h2>La banda</h2></header>
-      <p class="bio reveal" id="bio"></p>
-      <div class="mgrid" id="mgrid"></div>
-    </div>
+    <div class="wrap vall" id="ball" hidden><div class="mgrid" id="mgrid"></div></div>
   </section>
 
   <!-- contacto -->

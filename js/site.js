@@ -243,32 +243,42 @@
   }
 
   /* ---------- música (Spotify) ---------- */
-  let TRK = [], spApi = null;
-  const PLAYSVG = '<svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M8 5v14l11-7z" fill="currentColor"/></svg>';
+  let TRK = [], spApi = null, tAll = false;
+  const TPREV = 4;                       // canciones que se ven en la franja resumen
+  const PLAYSVG = '<svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><path d="M8 5v14l11-7z" fill="currentColor"/></svg>';
   function renderTracks() {
-    const g = $("#tgrid");
-    g.innerHTML = TRK.map((t, i) => {
+    const g = $("#tgrid"), list = tAll ? TRK : TRK.slice(0, TPREV);
+    g.innerHTML = list.map((t, i) => {
       const sp = parseSpotify(t.spotify_url), name = t.title || (sp ? "Escuchar en Spotify" : t.title || "");
       return `<article class="tc reveal" data-i="${i}">
         <button class="tc-btn" type="button" aria-label="Reproducir: ${esc(name)}" ${sp ? "" : "disabled"}>
           <span class="tc-cover"><span class="tc-ph">★</span></span>
-          <span class="tc-play">${PLAYSVG}</span>
+          <span class="tc-ov">${PLAYSVG}</span>
+          <span class="tc-bar"><i></i></span>
         </button>
-        <div class="tc-meta"><h3>${esc(name)}</h3><p>${sp ? "Spotify" : "Próximamente"}</p><button class="tc-close" type="button">Cerrar reproductor</button></div>
+        <div class="tc-meta">
+          <div class="tc-row"><h3>${esc(name)}</h3><button class="tc-go" type="button" aria-label="Reproducir: ${esc(name)}" ${sp ? "" : "disabled"}>${PLAYSVG}</button></div>
+          <p>${t.description ? esc(t.description) : sp ? "Spotify" : "Próximamente"}</p>
+          <button class="tc-close" type="button">Cerrar reproductor</button>
+        </div>
       </article>`;
     }).join("");
     reveal(g);
     // carátula y nombre oficiales desde Spotify
-    TRK.forEach((t, i) => {
+    list.forEach((t, i) => {
       if (!parseSpotify(t.spotify_url)) return;
       spotifyMeta(t.spotify_url).then((m) => {
         if (!m) return;
         const card = g.querySelector(`.tc[data-i="${i}"]`); if (!card) return;
         if (m.thumb && safe(m.thumb)) card.querySelector(".tc-cover").innerHTML = `<img src="${esc(safe(m.thumb))}" alt="Carátula de ${esc(t.title || m.title || "la canción")}" loading="lazy">`;
-        if (!t.title && m.title) { card.querySelector("h3").textContent = m.title; card.querySelector(".tc-btn").setAttribute("aria-label", "Reproducir: " + m.title); }
+        if (!t.title && m.title) { card.querySelector("h3").textContent = m.title; card.querySelectorAll(".tc-btn,.tc-go").forEach((b) => b.setAttribute("aria-label", "Reproducir: " + m.title)); }
       });
     });
   }
+  $("#tmore").addEventListener("click", (e) => {
+    tAll = !tAll; renderTracks();
+    e.currentTarget.innerHTML = (tAll ? "Ver menos" : "Ver toda la música") + ' <span aria-hidden="true">→</span>';
+  });
   function loadSpApi() {
     if (spApi) return spApi;
     spApi = new Promise((res, rej) => {
@@ -281,23 +291,51 @@
     spApi.catch(() => { spApi = null; });
     return spApi;
   }
+  const PAUSESVG = '<svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><path d="M7 5h4v14H7zM13 5h4v14h-4z" fill="currentColor"/></svg>';
+  let CURT = null;                                   // { card, ctrl } de la canción activa
+  function setTrackUI(card, paused) {
+    card.classList.toggle("paused", paused);
+    card.querySelectorAll(".tc-go,.tc-ov").forEach((el) => { el.innerHTML = paused ? PLAYSVG : PAUSESVG; });
+  }
   function stopTrack() {
+    if (CURT) { try { CURT.ctrl && CURT.ctrl.destroy(); } catch (e) {} CURT = null; }
     const c = $(".tc.playing"); if (!c) return;
-    c.classList.remove("playing"); c.querySelector(".tc-player")?.remove();
+    c.classList.remove("playing", "paused", "loading", "fallback");
+    c.querySelector(".tc-engine, .tc-player")?.remove();
+    const bar = c.querySelector(".tc-bar i"); if (bar) bar.style.width = "0";
+    setTrackUI(c, true);
   }
   function playTrack(card) {
-    const sp = parseSpotify(TRK[+card.dataset.i]?.spotify_url); if (!sp || card.classList.contains("playing")) return;
+    const sp = parseSpotify(TRK[+card.dataset.i]?.spotify_url); if (!sp) return;
+    if (CURT && CURT.card === card) { if (CURT.ctrl) CURT.ctrl.togglePlay(); return; }   // mismo tema: play / pausa
     stopTrack();
-    card.classList.add("playing");
-    const holder = document.createElement("div"); holder.className = "tc-player";
-    const target = document.createElement("div"); holder.appendChild(target); card.prepend(holder);
-    const fallback = () => { holder.innerHTML = `<iframe src="${esc(sp.embed)}" width="100%" height="${sp.height}" frameborder="0" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy" title="Reproductor de Spotify"></iframe>`; };
-    loadSpApi().then((api) => api.createController(target, { uri: sp.uri, width: "100%", height: sp.height }, (ctrl) => { ctrl.addListener("ready", () => ctrl.play()); })).catch(fallback);
+    card.classList.add("playing", "loading"); setTrackUI(card, false);
+    const holder = document.createElement("div"); holder.className = "tc-engine";
+    const target = document.createElement("div"); holder.appendChild(target); card.appendChild(holder);
+    CURT = { card, ctrl: null };
+    // si la API de Spotify no carga, se muestra el reproductor clásico para que siga sonando
+    const fallback = () => {
+      CURT = null; card.classList.add("fallback"); holder.className = "tc-player";
+      holder.innerHTML = `<iframe src="${esc(sp.embed)}" width="100%" height="${sp.height}" frameborder="0" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy" title="Reproductor de Spotify"></iframe>`;
+      card.prepend(holder);
+    };
+    loadSpApi().then((api) => api.createController(target, { uri: sp.uri, width: 300, height: 80 }, (ctrl) => {
+      if (!CURT || CURT.card !== card) { try { ctrl.destroy(); } catch (e) {} return; }
+      CURT.ctrl = ctrl;
+      ctrl.addListener("ready", () => ctrl.play());
+      ctrl.addListener("playback_update", (ev) => {
+        const d = ev.data || {};
+        card.classList.toggle("loading", !!d.isBuffering);
+        setTrackUI(card, !!d.isPaused);
+        const bar = card.querySelector(".tc-bar i");
+        if (bar && d.duration) bar.style.width = Math.min(100, (d.position / d.duration) * 100) + "%";
+      });
+    })).catch(fallback);
   }
   $("#tgrid").addEventListener("click", (e) => {
     const card = e.target.closest(".tc"); if (!card) return;
     if (e.target.closest(".tc-close")) return stopTrack();
-    if (e.target.closest(".tc-btn")) playTrack(card);
+    if (e.target.closest(".tc-btn, .tc-go")) playTrack(card);
   });
 
   /* ---------- vídeos ---------- */
@@ -327,6 +365,15 @@
     $("#vmore").hidden = vShown >= VIDS.length;
     reveal(g);
   }
+  function renderVHero() {
+    const b = $("#vhero"), v = VIDS[0];
+    if (!v) { b.hidden = true; return; }
+    const p = parseVideo(v.url);
+    const src = (v.poster_url && safe(v.poster_url)) || (p.kind === "youtube" ? `https://i.ytimg.com/vi/${p.id}/hqdefault.jpg` : "images/escenario.jpg");
+    b.innerHTML = `<img src="${esc(src)}" alt=""><span class="vplay"><svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true"><path d="M8 5v14l11-7z" fill="currentColor"/></svg></span>`;
+    b.setAttribute("aria-label", "Ver vídeo: " + (v.title || "destacado"));
+  }
+  $("#vhero").addEventListener("click", () => openCromo("v", 0));
   $("#vgrid").addEventListener("click", (e) => { const b = e.target.closest(".cc"); if (b) openCromo("v", +b.dataset.i); });
   $("#vmore").addEventListener("click", renderVideos);
 
@@ -357,6 +404,14 @@
     $("#pmore").hidden = phShown >= phView.length;
     reveal($("#masonry"));
   }
+  function renderPrev() {
+    $("#pprev").innerHTML = PH.slice(0, 3).map((p, i) => `<button class="pv" data-i="${i}" aria-label="Ver foto${p.caption ? ": " + esc(p.caption) : ""}"><img src="${esc(safe(p.url))}" alt="${esc(p.caption || "Foto de Max Estrella")}" loading="lazy"></button>`).join("");
+  }
+  $("#pprev").addEventListener("click", (e) => {
+    const b = e.target.closest(".pv"); if (!b) return;
+    if (phView !== PH) { phCat = "Todas"; renderChips(); resetPhotos(); }   // el visor usa la lista completa
+    openCromo("p", +b.dataset.i);
+  });
   $("#chips").addEventListener("click", (e) => {
     const b = e.target.closest(".chip"); if (!b) return;
     phCat = b.dataset.c; renderChips(); resetPhotos();
@@ -433,6 +488,20 @@
   });
   $("#year").textContent = new Date().getFullYear();
 
+  /* ---------- botones "ver todo": despliegan la lista completa debajo de la franja ---------- */
+  function toggler(btn, panel, openTxt, closeTxt) {
+    const b = $(btn), p = $(panel);
+    b.addEventListener("click", () => {
+      const show = p.hidden; p.hidden = !show;
+      b.setAttribute("aria-expanded", show);
+      b.innerHTML = (show ? closeTxt : openTxt) + ' <span aria-hidden="true">→</span>';
+      if (show) { reveal(p); p.scrollIntoView({ behavior: reduce ? "auto" : "smooth", block: "nearest" }); }
+    });
+  }
+  toggler("#vtoggle", "#vall", "Ver todos los vídeos", "Ocultar vídeos");
+  toggler("#gtoggle", "#gall", "Ver galería", "Ocultar galería");
+  toggler("#btoggle", "#ball", "Conoce a la banda", "Ocultar integrantes");
+
   /* ---------- carga ---------- */
   async function init() {
     reveal();
@@ -441,11 +510,14 @@
     renderEvents(events);
     TRK = tracks;
     if (TRK.length) renderTracks(); else $("#tgrid").innerHTML = '<p class="empty">Muy pronto, música nueva.</p>';
-    if (S.spotify && safe(S.spotify)) { $("#spotify-link").href = safe(S.spotify); $("#spotify-more").hidden = false; }
+    const spUrl = S.spotify && safe(S.spotify);
+    $("#tmore").hidden = TRK.length <= TPREV;                 // más de 4 canciones: "Ver toda la música"
+    if (spUrl) { $("#spotify-link").href = spUrl; $("#spotify-more").hidden = TRK.length > TPREV; }
     VIDS = videos; vShown = 0; $("#vgrid").innerHTML = "";
     if (VIDS.length) renderVideos(); else $("#vgrid").innerHTML = '<p class="empty">Muy pronto, vídeos nuevos.</p>';
-    PH = photos; renderChips(); resetPhotos();
-    if (!PH.length) $("#masonry").innerHTML = '<p class="empty">Muy pronto, fotos nuevas.</p>';
+    renderVHero();
+    PH = photos; renderChips(); resetPhotos(); renderPrev();
+    if (!PH.length) $("#pprev").innerHTML = $("#masonry").innerHTML = '<p class="empty">Muy pronto, fotos nuevas.</p>';
     NEWS = news; nShown = 0; $("#ngrid").innerHTML = ""; renderNews();
     renderMembers(members);
     reveal();

@@ -376,3 +376,125 @@ h2{font-family:var(--display);font-size:clamp(2.4rem,6.4vw,5rem);line-height:.95
 
 /* Cromos con vídeo incrustado: sin transformación 3D (evita tirones sobre el iframe) */
 .cromo.nofx{transform:none!important;transition:none}
+/* ---------- LAYOUT EN DOS COLUMNAS: texto a un lado, contenido al otro ----------
+   .split = texto a la izquierda · .split.flip = texto a la derecha (las secciones se alternan) */
+.split{display:grid;grid-template-columns:minmax(230px,.36fr) minmax(0,1fr);gap:clamp(32px,5vw,76px);align-items:start}
+.split.flip{grid-template-columns:minmax(0,1fr) minmax(230px,.36fr)}
+.split.flip .side{order:2}
+.side{position:sticky;top:104px}
+.side h2{font-size:clamp(2rem,3.4vw,2.8rem);line-height:1}
+.rule{display:block;width:44px;height:3px;background:var(--red2);margin:18px 0 20px}
+.paper .rule{background:var(--red)}
+.blurb,.side .bio{font-size:1.08rem;line-height:1.6;max-width:32ch;margin:0 0 26px;font-weight:400;opacity:.9}
+.side .bio{max-width:36ch;font-size:1.05rem}
+.side-btn{display:block}
+.main-col{min-width:0}
+.main-col .chips{margin:0 0 24px}
+
+/* el contenido se adapta a la columna más estrecha */
+.tgrid{grid-template-columns:repeat(auto-fill,minmax(150px,1fr))}
+.vgrid{grid-template-columns:repeat(auto-fill,minmax(240px,1fr))}
+.masonry{columns:3 190px}
+.ngrid{grid-template-columns:1fr}
+.mgrid{grid-template-columns:repeat(auto-fit,minmax(150px,1fr))}
+.split .event,.split .event.past{grid-template-columns:100px 1fr auto;gap:22px}
+.split .ev-date b{font-size:2.8rem}
+.split .event.past .ev-date b{font-size:2.1rem}
+
+@media(max-width:900px){
+  .split,.split.flip{grid-template-columns:1fr;gap:32px}
+  .split.flip .side{order:0}
+  .side{position:static}
+  .blurb,.side .bio{max-width:52ch}
+}
+@media(max-width:820px){
+  .split .event,.split .event.past{grid-template-columns:84px 1fr;gap:18px}
+}
+
+/* =====================================================================
+   FRANJAS RESUMEN (Música · Vídeos · Fotos · La banda), como el diseño de referencia
+   ===================================================================== */
+.section.strip{padding:clamp(40px,5vw,64px) 0}
+.section.strip.bleed{padding:0}
+.dark.flat{background-color:#0c0b0d;background-image:none}
+.dark.flat::before{display:none}
+.dark.flat.deep{background-color:#070708}
+#banda.flat{background-image:none}
+.stone{background-color:#d5d1c9;color:var(--ink);background-image:radial-gradient(rgba(0,0,0,.06) 1px,transparent 1.2px);background-size:5px 5px}
+
+/* títulos finos con rayita roja y texto serif, como en la imagen */
+.side h2,.band-text h2{font-family:var(--cond);font-weight:400;font-size:clamp(1.5rem,2.4vw,2rem);letter-spacing:.22em;line-height:1.1;text-transform:uppercase}
+.stone h2{color:var(--ink)}
+.rule{width:34px;height:2px;margin:14px 0 20px}
+.blurb,.side .bio,.band-text .bio{font-family:'Lora',Georgia,serif;font-size:1.02rem;line-height:1.6;font-weight:400;opacity:.92;max-width:34ch;margin:0 0 26px}
+.band-text .bio{max-width:44ch;font-size:1.02rem;margin-top:0}
+.strip .side{position:static}
+.paper+.paper{border-top:2px solid rgba(14,12,12,.18)}
+
+/* botón de línea fina con flecha */
+.btn-line{display:inline-flex;align-items:center;gap:12px;font-family:var(--body);font-size:.72rem;font-weight:500;letter-spacing:.2em;text-transform:uppercase;text-decoration:none;color:var(--cream);background:transparent;border:1px solid rgba(234,223,198,.7);padding:13px 26px;cursor:pointer;transition:background .25s,color .25s,border-color .25s}
+.btn-line:hover{background:var(--cream);color:var(--ink);border-color:var(--cream)}
+.stone .btn-line{color:var(--ink);border-color:rgba(14,12,12,.7)}
+.stone .btn-line:hover{background:var(--ink);color:var(--cream);border-color:var(--ink)}
+
+/* MÚSICA: 4 carátulas con título, botón play redondo y frase */
+.strip .tgrid{grid-template-columns:repeat(4,1fr);gap:24px}
+.tgrid .empty{grid-column:1/-1}
+.tc-btn{border:0}
+.tc-meta .tc-row{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.strip .tc-meta h3{font-family:'Lora',Georgia,serif;font-weight:500;font-size:.98rem}
+.strip .tc-meta p{font-family:'Lora',Georgia,serif;text-transform:none;letter-spacing:0;font-size:.82rem;line-height:1.45;color:var(--cream);opacity:.65;margin-top:6px}
+.tc-go{flex:none;width:34px;height:34px;border-radius:50%;border:1px solid rgba(234,223,198,.75);background:none;color:var(--cream);display:grid;place-items:center;cursor:pointer;transition:background .25s,color .25s}
+.tc-go svg{margin-left:2px}
+.tc-go:not(:disabled):hover{background:var(--cream);color:var(--ink)}
+.tc-go:disabled{opacity:.35;cursor:default}
+.tc.playing .tc-go{display:none}
+@media(max-width:560px){.strip .tgrid{grid-template-columns:repeat(2,1fr)}}
+
+/* VÍDEOS y LA BANDA: imagen a sangre a la izquierda, texto a la derecha */
+.band{display:grid;grid-template-columns:1fr 1fr;min-height:clamp(240px,24vw,340px)}
+.band-img{position:relative;display:block;width:100%;height:100%;min-height:240px;padding:0;border:0;background:#000;overflow:hidden;cursor:pointer}
+.band-img.static{cursor:default}
+.band-img img{width:100%;height:100%;object-fit:cover;object-position:50% 30%;filter:grayscale(1) contrast(1.05) brightness(.85);transition:transform .8s var(--ease),filter .5s}
+button.band-img:hover img{transform:scale(1.04);filter:grayscale(.4) brightness(.95)}
+.band-img::after{content:"";position:absolute;inset:0;pointer-events:none;background:linear-gradient(90deg,transparent 65%,rgba(7,7,8,.85))}
+.band-text{display:flex;flex-direction:column;align-items:flex-start;justify-content:center;padding:clamp(32px,5vw,64px) clamp(24px,8vw,120px)}
+.vall{padding-top:clamp(40px,5vw,60px);padding-bottom:clamp(48px,6vw,72px)}
+@media(max-width:820px){
+  .band{grid-template-columns:1fr}
+  .band-img{min-height:0;height:230px}
+  .band-img::after{background:linear-gradient(180deg,transparent 60%,rgba(7,7,8,.85))}
+}
+
+/* FOTOS: 3 fotos de muestra y galería completa desplegable */
+.pgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:22px}
+.pv{display:block;padding:0;border:0;background:#111;aspect-ratio:4/3;overflow:hidden;cursor:pointer}
+.pv img{width:100%;height:100%;object-fit:cover;transition:transform .7s var(--ease)}
+.pv:hover img,.pv:focus-visible img{transform:scale(1.05)}
+.gall{padding-top:clamp(36px,5vw,56px)}
+.stone .chip{border-color:rgba(14,12,12,.3)}
+.stone .chip:hover{border-color:var(--ink)}
+.stone .chip.on{background:var(--ink);color:var(--cream);border-color:var(--ink)}
+.stone .empty a{color:var(--red)}
+@media(max-width:560px){.pgrid{grid-template-columns:1fr 1fr}.pgrid .pv:nth-child(3){display:none}}
+
+/* ---------- MÚSICA: reproducción en la propia tarjeta (el reproductor de Spotify queda oculto) ---------- */
+.tc{position:relative}
+.tc-engine{position:fixed;left:-9999px;bottom:0;width:300px;height:80px;opacity:0;pointer-events:none}
+.tc-ov{position:absolute;inset:0;display:grid;place-items:center;color:#fff;background:rgba(7,7,8,.5);opacity:0;transition:opacity .25s}
+.tc-ov svg{width:30px;height:30px}
+.tc-btn:not(:disabled):hover .tc-ov,.tc-btn:focus-visible .tc-ov,.tc.playing:not(.paused) .tc-ov{opacity:1}
+.tc-bar{position:absolute;left:0;right:0;bottom:0;height:3px;background:rgba(255,255,255,.25);opacity:0;transition:opacity .25s}
+.tc-bar i{display:block;height:100%;width:0;background:var(--red2);transition:width .4s linear}
+.tc.playing .tc-bar{opacity:1}
+.tc.playing .tc-meta h3{color:var(--red2)}
+.tc.loading .tc-cover{opacity:.6}
+/* la tarjeta ya no se ensancha ni se oculta al sonar */
+.tc.playing{grid-column:auto}
+.tc.playing .tc-btn{display:block}
+.tc.playing .tc-go{display:grid}
+.tc.playing:not(.fallback) .tc-close{display:none}
+/* modo de reserva: reproductor clásico de Spotify */
+.tc.fallback{grid-column:span 2}
+.tc.fallback .tc-btn,.tc.fallback .tc-go{display:none}
+.tc.fallback .tc-close{display:inline-block}
