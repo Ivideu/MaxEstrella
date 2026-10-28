@@ -21,6 +21,29 @@
     return { kind: url ? "link" : "demo" };
   }
 
+  /* Spotify: reconoce enlaces de canción, álbum, lista, podcast o artista */
+  function parseSpotify(url) {
+    url = (url || "").trim();
+    const m = url.match(/open\.spotify\.com\/(?:intl-[a-z-]+\/)?(track|album|playlist|episode|show|artist)\/([A-Za-z0-9]+)/i) || url.match(/^spotify:(track|album|playlist|episode|show|artist):([A-Za-z0-9]+)/i);
+    if (!m) return null;
+    const type = m[1].toLowerCase(), id = m[2];
+    return { type, id, uri: `spotify:${type}:${id}`, url: `https://open.spotify.com/${type}/${id}`, embed: `https://open.spotify.com/embed/${type}/${id}?utm_source=generator&theme=0`, height: type === "track" || type === "episode" ? 152 : 352 };
+  }
+  /* Carátula y nombre oficiales de Spotify (oEmbed). Se guardan en sessionStorage para no repetir la consulta. */
+  async function spotifyMeta(url) {
+    const sp = parseSpotify(url); if (!sp) return null;
+    const key = "sp:" + sp.uri;
+    try { const c = sessionStorage.getItem(key); if (c) return JSON.parse(c); } catch (e) {}
+    try {
+      const r = await fetch("https://open.spotify.com/oembed?url=" + encodeURIComponent(sp.url));
+      if (!r.ok) return null;
+      const j = await r.json();
+      const m = { title: j.title || "", thumb: j.thumbnail_url || "" };
+      try { sessionStorage.setItem(key, JSON.stringify(m)); } catch (e) {}
+      return m;
+    } catch (e) { return null; }
+  }
+
   /* ---------- DATOS DEMO (se ven mientras no haya Supabase) ---------- */
   const year = new Date().getFullYear();
   const iso = (days) => new Date(Date.now() + days * 864e5 - new Date().getTimezoneOffset() * 6e4).toISOString().slice(0, 10);
@@ -35,6 +58,7 @@
       { id: "n1", title: "Bienvenidos a la nueva web de Max Estrella", body: "Aquí iremos publicando conciertos, vídeos, fotos y todas las novedades del grupo.\n\nEsta noticia es de ejemplo: desde el panel de administración podréis escribir las vuestras, con foto y todo.", image_url: "images/cartel.jpg", published_at: new Date().toISOString() },
       { id: "n2", title: "Nuevo directo en la Sala Fun House", body: "Una noche de rock con las CANCIONES QUE ENAMORAN y las que emocionan. Noticia de ejemplo.", image_url: "", published_at: new Date(Date.now() - 864e5 * 6).toISOString() }
     ],
+    tracks: [1, 2, 3, 4].map((n) => ({ id: "t" + n, title: `Canción ${n} · pendiente de añadir`, spotify_url: "" })),
     videos: [1, 2, 3, 4, 5].map((n) => ({ id: "v" + n, title: `Vídeo ${n} · pendiente de añadir`, url: "", featured: n === 1 })),
     photos: [
       { id: "p0", url: "images/cartel.jpg", caption: "Cartel · Sala Fun House", category: "Cartel" },
@@ -65,6 +89,7 @@
     if (table === "events") q = q.order("date", { ascending: true });
     else if (table === "news") q = q.eq("published", true).order("published_at", { ascending: false });
     else if (table === "videos") q = q.order("featured", { ascending: false }).order("created_at", { ascending: false });
+    else if (table === "tracks") q = q.order("sort", { ascending: true }).order("created_at", { ascending: false });
     else if (table === "photos") q = q.order("sort", { ascending: true }).order("created_at", { ascending: false });
     else if (table === "members") q = q.order("sort", { ascending: true });
     const { data, error } = await q;
@@ -79,5 +104,5 @@
     return Object.fromEntries((data || []).map((r) => [r.key, r.value]));
   }
 
-  window.MAX = { live, sb, config: C, esc, safeUrl, parseVideo, get, settings, DEMO };
+  window.MAX = { live, sb, config: C, esc, safeUrl, parseVideo, parseSpotify, spotifyMeta, get, settings, DEMO };
 })();

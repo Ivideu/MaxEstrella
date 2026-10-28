@@ -1,6 +1,6 @@
 (function () {
   const M = window.MAX;
-  const { esc, safeUrl: safe, parseVideo } = M;
+  const { esc, safeUrl: safe, parseVideo, parseSpotify, spotifyMeta } = M;
   const $ = (s, r = document) => r.querySelector(s);
   const $$ = (s, r = document) => [...r.querySelectorAll(s)];
   const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -242,6 +242,64 @@
     $("#past-wrap").hidden = !PAST.length;
   }
 
+  /* ---------- música (Spotify) ---------- */
+  let TRK = [], spApi = null;
+  const PLAYSVG = '<svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M8 5v14l11-7z" fill="currentColor"/></svg>';
+  function renderTracks() {
+    const g = $("#tgrid");
+    g.innerHTML = TRK.map((t, i) => {
+      const sp = parseSpotify(t.spotify_url), name = t.title || (sp ? "Escuchar en Spotify" : t.title || "");
+      return `<article class="tc reveal" data-i="${i}">
+        <button class="tc-btn" type="button" aria-label="Reproducir: ${esc(name)}" ${sp ? "" : "disabled"}>
+          <span class="tc-cover"><span class="tc-ph">★</span></span>
+          <span class="tc-play">${PLAYSVG}</span>
+        </button>
+        <div class="tc-meta"><h3>${esc(name)}</h3><p>${sp ? "Spotify" : "Próximamente"}</p><button class="tc-close" type="button">Cerrar reproductor</button></div>
+      </article>`;
+    }).join("");
+    reveal(g);
+    // carátula y nombre oficiales desde Spotify
+    TRK.forEach((t, i) => {
+      if (!parseSpotify(t.spotify_url)) return;
+      spotifyMeta(t.spotify_url).then((m) => {
+        if (!m) return;
+        const card = g.querySelector(`.tc[data-i="${i}"]`); if (!card) return;
+        if (m.thumb && safe(m.thumb)) card.querySelector(".tc-cover").innerHTML = `<img src="${esc(safe(m.thumb))}" alt="Carátula de ${esc(t.title || m.title || "la canción")}" loading="lazy">`;
+        if (!t.title && m.title) { card.querySelector("h3").textContent = m.title; card.querySelector(".tc-btn").setAttribute("aria-label", "Reproducir: " + m.title); }
+      });
+    });
+  }
+  function loadSpApi() {
+    if (spApi) return spApi;
+    spApi = new Promise((res, rej) => {
+      window.onSpotifyIframeApiReady = (api) => res(api);
+      const sc = document.createElement("script"); sc.src = "https://open.spotify.com/embed/iframe-api/v1"; sc.async = true;
+      sc.onerror = () => rej(new Error("spotify api"));
+      document.head.appendChild(sc);
+      setTimeout(() => rej(new Error("timeout")), 6000);
+    });
+    spApi.catch(() => { spApi = null; });
+    return spApi;
+  }
+  function stopTrack() {
+    const c = $(".tc.playing"); if (!c) return;
+    c.classList.remove("playing"); c.querySelector(".tc-player")?.remove();
+  }
+  function playTrack(card) {
+    const sp = parseSpotify(TRK[+card.dataset.i]?.spotify_url); if (!sp || card.classList.contains("playing")) return;
+    stopTrack();
+    card.classList.add("playing");
+    const holder = document.createElement("div"); holder.className = "tc-player";
+    const target = document.createElement("div"); holder.appendChild(target); card.prepend(holder);
+    const fallback = () => { holder.innerHTML = `<iframe src="${esc(sp.embed)}" width="100%" height="${sp.height}" frameborder="0" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy" title="Reproductor de Spotify"></iframe>`; };
+    loadSpApi().then((api) => api.createController(target, { uri: sp.uri, width: "100%", height: sp.height }, (ctrl) => { ctrl.addListener("ready", () => ctrl.play()); })).catch(fallback);
+  }
+  $("#tgrid").addEventListener("click", (e) => {
+    const card = e.target.closest(".tc"); if (!card) return;
+    if (e.target.closest(".tc-close")) return stopTrack();
+    if (e.target.closest(".tc-btn")) playTrack(card);
+  });
+
   /* ---------- vídeos ---------- */
   const PLAT = { youtube: "YouTube", instagram: "Instagram", tiktok: "TikTok", mp4: "Vídeo", link: "Enlace", demo: "Próximamente" };
   let VIDS = [], vShown = 0;
@@ -378,9 +436,12 @@
   /* ---------- carga ---------- */
   async function init() {
     reveal();
-    const [events, videos, photos, news, members, S] = await Promise.all([M.get("events"), M.get("videos"), M.get("photos"), M.get("news"), M.get("members"), M.settings()]);
+    const [events, tracks, videos, photos, news, members, S] = await Promise.all([M.get("events"), M.get("tracks"), M.get("videos"), M.get("photos"), M.get("news"), M.get("members"), M.settings()]);
     renderSettings(S);
     renderEvents(events);
+    TRK = tracks;
+    if (TRK.length) renderTracks(); else $("#tgrid").innerHTML = '<p class="empty">Muy pronto, música nueva.</p>';
+    if (S.spotify && safe(S.spotify)) { $("#spotify-link").href = safe(S.spotify); $("#spotify-more").hidden = false; }
     VIDS = videos; vShown = 0; $("#vgrid").innerHTML = "";
     if (VIDS.length) renderVideos(); else $("#vgrid").innerHTML = '<p class="empty">Muy pronto, vídeos nuevos.</p>';
     PH = photos; renderChips(); resetPhotos();

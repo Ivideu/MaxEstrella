@@ -1,5 +1,5 @@
 (function () {
-  const M = window.MAX, { sb, live, esc, parseVideo } = M;
+  const M = window.MAX, { sb, live, esc, parseVideo, parseSpotify } = M;
   const $ = (s, r = document) => r.querySelector(s);
   const $$ = (s, r = document) => [...r.querySelectorAll(s)];
   const app = $("#app");
@@ -83,6 +83,15 @@
       ],
       row: (r) => ({ t: r.title, s: fmtTs(r.published_at), img: r.image_url, tag: r.published ? "" : "borrador" })
     },
+    tracks: {
+      label: "Música", table: "tracks", order: [["sort", true], ["created_at", false]], files: [],
+      fields: [
+        { k: "spotify_url", l: "Enlace de Spotify", t: "spotify", req: 1, help: "Canción, álbum o lista. En Spotify: «···» → Compartir → Copiar enlace de la canción. La carátula y el nombre se cogen solos de Spotify." },
+        { k: "title", l: "Título (opcional)", ph: "Si lo dejas vacío se usa el nombre de Spotify" },
+        { k: "sort", l: "Orden (número pequeño = antes)", t: "number", def: 0 }
+      ],
+      row: (r) => ({ t: r.title || "Canción de Spotify", s: r.spotify_url, tag: parseSpotify(r.spotify_url) ? (parseSpotify(r.spotify_url).type === "track" ? "" : parseSpotify(r.spotify_url).type) : "enlace no válido" })
+    },
     videos: {
       label: "Vídeos", table: "videos", order: [["featured", false], ["created_at", false]], files: ["url", "poster_url"],
       fields: [
@@ -123,7 +132,7 @@
     { k: "facebook", l: "Facebook (enlace)", t: "url" },
     { k: "spotify", l: "Spotify (enlace)", t: "url" }
   ];
-  const TABS = [["events", "Conciertos"], ["news", "Noticias"], ["videos", "Vídeos"], ["photos", "Fotos"], ["members", "La banda"], ["inquiries", "Mensajes"], ["settings", "Ajustes"]];
+  const TABS = [["events", "Conciertos"], ["tracks", "Música"], ["news", "Noticias"], ["videos", "Vídeos"], ["photos", "Fotos"], ["members", "La banda"], ["inquiries", "Mensajes"], ["settings", "Ajustes"]];
 
   /* ---------- campos de formulario ---------- */
   function fieldHTML(f, v) {
@@ -140,6 +149,10 @@
           <div class="upl">${val ? `<img src="${esc(val)}" alt="" data-prev="${f.k}">` : `<img alt="" data-prev="${f.k}" hidden>`}
             <div><input type="file" accept="image/*" data-up="${f.k}" data-folder="${f.folder || "misc"}"><div class="st" data-st="${f.k}"></div></div></div>
           <input type="url" data-k="${f.k}" value="${esc(val)}" placeholder="…o pega aquí el enlace de una imagen">${help}</div>`;
+      case "spotify":
+        return `<div class="field"><label for="${id}">${esc(f.l)}</label>
+          <input type="url" id="${id}" data-k="${f.k}" value="${esc(val)}" placeholder="https://open.spotify.com/track/…" ${req}>
+          <small data-detsp="${f.k}"></small>${help}</div>`;
       case "video":
         return `<div class="field"><label for="${id}">${esc(f.l)}</label>
           <input type="url" id="${id}" data-k="${f.k}" value="${esc(val)}" placeholder="Pega un enlace de YouTube, Instagram o TikTok" ${req}>
@@ -156,6 +169,12 @@
       s.textContent = names[p.kind] || "";
     });
     $$("[data-det]", form).forEach((s) => $(`[data-k="${s.dataset.det}"]`, form).addEventListener("input", det)); det();
+    const detSp = () => $$("[data-detsp]", form).forEach((s) => {
+      const v = $(`[data-k="${s.dataset.detsp}"]`, form).value.trim(), p = parseSpotify(v);
+      const names = { track: "canción", album: "álbum", playlist: "lista", episode: "episodio", show: "podcast", artist: "artista" };
+      s.textContent = !v ? "" : p ? `✔ Detectado: ${names[p.type]} de Spotify` : "⚠ No parece un enlace de Spotify (debe empezar por https://open.spotify.com/…)";
+    });
+    $$("[data-detsp]", form).forEach((s) => $(`[data-k="${s.dataset.detsp}"]`, form).addEventListener("input", detSp)); detSp();
     $$("[data-up]", form).forEach((inp) => inp.addEventListener("change", async () => {
       const f = inp.files[0]; if (!f) return;
       const st = $(`[data-st="${inp.dataset.up}"]`, form); st.textContent = "Subiendo…";
@@ -299,6 +318,7 @@
       e.preventDefault();
       const o = gather(form, E.fields), miss = E.fields.find((f) => f.req && !o[f.k]);
       if (miss) { $("#ferr").textContent = `Falta rellenar: ${miss.l}`; return; }
+      if (E.fields.some((f) => f.t === "spotify") && !parseSpotify(o.spotify_url)) { $("#ferr").textContent = "Ese enlace no es de Spotify. Copia el enlace de la canción desde Spotify (debe empezar por https://open.spotify.com/…)."; return; }
       const btn = form.querySelector("button[type=submit]"); btn.disabled = true;
       const res = row ? await sb.from(E.table).update(o).eq("id", row.id) : await sb.from(E.table).insert(o);
       btn.disabled = false;
