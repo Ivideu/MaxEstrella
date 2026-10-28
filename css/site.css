@@ -477,24 +477,3 @@ button.band-img:hover img{transform:scale(1.04);filter:grayscale(.4) brightness(
 .stone .chip.on{background:var(--ink);color:var(--cream);border-color:var(--ink)}
 .stone .empty a{color:var(--red)}
 @media(max-width:560px){.pgrid{grid-template-columns:1fr 1fr}.pgrid .pv:nth-child(3){display:none}}
-
-/* ---------- MÚSICA: reproducción en la propia tarjeta (el reproductor de Spotify queda oculto) ---------- */
-.tc{position:relative}
-.tc-engine{position:fixed;left:-9999px;bottom:0;width:300px;height:80px;opacity:0;pointer-events:none}
-.tc-ov{position:absolute;inset:0;display:grid;place-items:center;color:#fff;background:rgba(7,7,8,.5);opacity:0;transition:opacity .25s}
-.tc-ov svg{width:30px;height:30px}
-.tc-btn:not(:disabled):hover .tc-ov,.tc-btn:focus-visible .tc-ov,.tc.playing:not(.paused) .tc-ov{opacity:1}
-.tc-bar{position:absolute;left:0;right:0;bottom:0;height:3px;background:rgba(255,255,255,.25);opacity:0;transition:opacity .25s}
-.tc-bar i{display:block;height:100%;width:0;background:var(--red2);transition:width .4s linear}
-.tc.playing .tc-bar{opacity:1}
-.tc.playing .tc-meta h3{color:var(--red2)}
-.tc.loading .tc-cover{opacity:.6}
-/* la tarjeta ya no se ensancha ni se oculta al sonar */
-.tc.playing{grid-column:auto}
-.tc.playing .tc-btn{display:block}
-.tc.playing .tc-go{display:grid}
-.tc.playing:not(.fallback) .tc-close{display:none}
-/* modo de reserva: reproductor clásico de Spotify */
-.tc.fallback{grid-column:span 2}
-.tc.fallback .tc-btn,.tc.fallback .tc-go{display:none}
-.tc.fallback .tc-close{display:inline-block}

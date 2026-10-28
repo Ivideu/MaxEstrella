@@ -253,8 +253,6 @@
       return `<article class="tc reveal" data-i="${i}">
         <button class="tc-btn" type="button" aria-label="Reproducir: ${esc(name)}" ${sp ? "" : "disabled"}>
           <span class="tc-cover"><span class="tc-ph">★</span></span>
-          <span class="tc-ov">${PLAYSVG}</span>
-          <span class="tc-bar"><i></i></span>
         </button>
         <div class="tc-meta">
           <div class="tc-row"><h3>${esc(name)}</h3><button class="tc-go" type="button" aria-label="Reproducir: ${esc(name)}" ${sp ? "" : "disabled"}>${PLAYSVG}</button></div>
@@ -291,46 +289,18 @@
     spApi.catch(() => { spApi = null; });
     return spApi;
   }
-  const PAUSESVG = '<svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><path d="M7 5h4v14H7zM13 5h4v14h-4z" fill="currentColor"/></svg>';
-  let CURT = null;                                   // { card, ctrl } de la canción activa
-  function setTrackUI(card, paused) {
-    card.classList.toggle("paused", paused);
-    card.querySelectorAll(".tc-go,.tc-ov").forEach((el) => { el.innerHTML = paused ? PLAYSVG : PAUSESVG; });
-  }
   function stopTrack() {
-    if (CURT) { try { CURT.ctrl && CURT.ctrl.destroy(); } catch (e) {} CURT = null; }
     const c = $(".tc.playing"); if (!c) return;
-    c.classList.remove("playing", "paused", "loading", "fallback");
-    c.querySelector(".tc-engine, .tc-player")?.remove();
-    const bar = c.querySelector(".tc-bar i"); if (bar) bar.style.width = "0";
-    setTrackUI(c, true);
+    c.classList.remove("playing"); c.querySelector(".tc-player")?.remove();
   }
   function playTrack(card) {
-    const sp = parseSpotify(TRK[+card.dataset.i]?.spotify_url); if (!sp) return;
-    if (CURT && CURT.card === card) { if (CURT.ctrl) CURT.ctrl.togglePlay(); return; }   // mismo tema: play / pausa
+    const sp = parseSpotify(TRK[+card.dataset.i]?.spotify_url); if (!sp || card.classList.contains("playing")) return;
     stopTrack();
-    card.classList.add("playing", "loading"); setTrackUI(card, false);
-    const holder = document.createElement("div"); holder.className = "tc-engine";
-    const target = document.createElement("div"); holder.appendChild(target); card.appendChild(holder);
-    CURT = { card, ctrl: null };
-    // si la API de Spotify no carga, se muestra el reproductor clásico para que siga sonando
-    const fallback = () => {
-      CURT = null; card.classList.add("fallback"); holder.className = "tc-player";
-      holder.innerHTML = `<iframe src="${esc(sp.embed)}" width="100%" height="${sp.height}" frameborder="0" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy" title="Reproductor de Spotify"></iframe>`;
-      card.prepend(holder);
-    };
-    loadSpApi().then((api) => api.createController(target, { uri: sp.uri, width: 300, height: 80 }, (ctrl) => {
-      if (!CURT || CURT.card !== card) { try { ctrl.destroy(); } catch (e) {} return; }
-      CURT.ctrl = ctrl;
-      ctrl.addListener("ready", () => ctrl.play());
-      ctrl.addListener("playback_update", (ev) => {
-        const d = ev.data || {};
-        card.classList.toggle("loading", !!d.isBuffering);
-        setTrackUI(card, !!d.isPaused);
-        const bar = card.querySelector(".tc-bar i");
-        if (bar && d.duration) bar.style.width = Math.min(100, (d.position / d.duration) * 100) + "%";
-      });
-    })).catch(fallback);
+    card.classList.add("playing");
+    const holder = document.createElement("div"); holder.className = "tc-player";
+    const target = document.createElement("div"); holder.appendChild(target); card.prepend(holder);
+    const fallback = () => { holder.innerHTML = `<iframe src="${esc(sp.embed)}" width="100%" height="${sp.height}" frameborder="0" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy" title="Reproductor de Spotify"></iframe>`; };
+    loadSpApi().then((api) => api.createController(target, { uri: sp.uri, width: "100%", height: sp.height }, (ctrl) => { ctrl.addListener("ready", () => ctrl.play()); })).catch(fallback);
   }
   $("#tgrid").addEventListener("click", (e) => {
     const card = e.target.closest(".tc"); if (!card) return;
