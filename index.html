@@ -24,10 +24,10 @@
   <a class="brand" href="#inicio" aria-label="Max Estrella, inicio">MAX <i>★</i> ESTRELLA</a>
   <nav id="menu" aria-label="Principal">
     <a href="#conciertos">Conciertos</a>
-    <a href="#noticias">Noticias</a>
     <a href="#musica">Música</a>
     <a href="#videos">Vídeos</a>
     <a href="#fotos">Fotos</a>
+    <a href="#noticias">Noticias</a>
     <a href="#banda">La banda</a>
     <a href="#contacto" class="pill">contacto</a>
   </nav>
@@ -68,37 +68,25 @@
     </div>
   </div>
 
-  <!-- CONCIERTOS (texto a la derecha) -->
-  <section class="section paper" id="conciertos">
-    <div class="wrap split flip">
+  <!-- CONCIERTOS (claro): próximas fechas + "ver todos" -->
+  <section class="section strip stone" id="conciertos">
+    <div class="wrap split">
       <header class="side reveal">
         <h2>Conciertos</h2><span class="rule"></span>
         <p class="blurb">Salas, festivales y eventos privados. Mira dónde tocamos y cómo fueron los últimos directos.</p>
-        <a class="btn dark-btn" href="#contacto">Contratar al grupo</a>
+        <button class="btn-line" id="ctoggle" type="button" aria-expanded="false" aria-controls="call" hidden>Ver todos los conciertos <span aria-hidden="true">→</span></button>
       </header>
       <div class="main-col">
         <ul class="events" id="events"></ul>
         <p class="empty reveal" id="events-empty" hidden>Pronto anunciaremos nuevas fechas. ¿Quieres a Max Estrella en tu sala? <a href="#contacto">Escríbenos</a>.</p>
-        <div class="past-wrap" id="past-wrap" hidden>
-          <h3 class="sub reveal">Últimos conciertos</h3>
-          <ul class="events past-list" id="past"></ul>
-          <div class="more"><button class="btn dark-btn" id="past-more" hidden>Ver más conciertos</button></div>
-        </div>
       </div>
     </div>
-  </section>
-
-  <!-- NOTICIAS (texto a la derecha) -->
-  <section class="section paper" id="noticias">
-    <div class="wrap split flip">
-      <header class="side reveal">
-        <h2>Noticias</h2><span class="rule"></span>
-        <p class="blurb">Lo último del grupo: conciertos, lanzamientos y novedades.</p>
-        <button class="btn dark-btn" id="nmore" hidden>Ver más noticias</button>
-      </header>
-      <div class="main-col">
-        <div class="ngrid" id="ngrid"></div>
-        <p class="empty" id="news-empty" hidden>Todavía no hay noticias. ¡Vuelve pronto!</p>
+    <div class="wrap call" id="call" hidden>
+      <div id="rest-wrap" hidden><h3 class="sub">Más fechas</h3><ul class="events" id="events-rest"></ul></div>
+      <div class="past-wrap" id="past-wrap" hidden>
+        <h3 class="sub">Últimos conciertos</h3>
+        <ul class="events past-list" id="past"></ul>
+        <div class="more"><button class="btn dark-btn" id="past-more" hidden>Ver más conciertos</button></div>
       </div>
     </div>
   </section>
@@ -117,7 +105,7 @@
   </section>
 
   <!-- VÍDEOS: imagen a pantalla completa a la izquierda, texto a la derecha -->
-  <section class="section strip bleed dark flat deep" id="videos">
+  <section class="section strip bleed stone" id="videos">
     <div class="band">
       <button class="band-img" id="vhero" type="button" aria-label="Ver vídeo destacado"></button>
       <div class="band-text">
@@ -128,12 +116,12 @@
     </div>
     <div class="wrap vall" id="vall" hidden>
       <div class="vgrid" id="vgrid"></div>
-      <div class="more"><button class="btn ghost" id="vmore" hidden>Ver más vídeos</button></div>
+      <div class="more"><button class="btn dark-btn" id="vmore" hidden>Ver más vídeos</button></div>
     </div>
   </section>
 
   <!-- FOTOS: banda clara, texto a la izquierda y 3 fotos -->
-  <section class="section strip stone" id="fotos">
+  <section class="section strip dark flat" id="fotos">
     <div class="wrap split">
       <header class="side reveal">
         <h2>Fotos</h2><span class="rule"></span>
@@ -145,7 +133,26 @@
     <div class="wrap gall" id="gall" hidden>
       <div class="chips" id="chips" role="tablist" aria-label="Filtrar fotos"></div>
       <div class="masonry" id="masonry"></div>
-      <div class="more"><button class="btn dark-btn" id="pmore" hidden>Ver más fotos</button></div>
+      <div class="more"><button class="btn ghost" id="pmore" hidden>Ver más fotos</button></div>
+    </div>
+  </section>
+
+  <!-- NOTICIAS (claro): 3 últimas + "ver todas" -->
+  <section class="section strip stone" id="noticias">
+    <div class="wrap split">
+      <header class="side reveal">
+        <h2>Noticias</h2><span class="rule"></span>
+        <p class="blurb">Lo último del grupo: conciertos, lanzamientos y novedades.</p>
+        <button class="btn-line" id="ntoggle" type="button" aria-expanded="false" aria-controls="nall" hidden>Ver todas las noticias <span aria-hidden="true">→</span></button>
+      </header>
+      <div class="main-col">
+        <div class="pgrid" id="nprev"></div>
+        <p class="empty" id="news-empty" hidden>Todavía no hay noticias. ¡Vuelve pronto!</p>
+      </div>
+    </div>
+    <div class="wrap nall" id="nall" hidden>
+      <div class="ngrid" id="ngrid"></div>
+      <div class="more"><button class="btn dark-btn" id="nmore" hidden>Ver más noticias</button></div>
     </div>
   </section>
 

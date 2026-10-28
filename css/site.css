@@ -477,3 +477,15 @@ button.band-img:hover img{transform:scale(1.04);filter:grayscale(.4) brightness(
 .stone .chip.on{background:var(--ink);color:var(--cream);border-color:var(--ink)}
 .stone .empty a{color:var(--red)}
 @media(max-width:560px){.pgrid{grid-template-columns:1fr 1fr}.pgrid .pv:nth-child(3){display:none}}
+
+/* ---------- CONCIERTOS y NOTICIAS en el mismo formato de franja ---------- */
+.call,.nall{padding-top:clamp(36px,5vw,56px)}
+#rest-wrap[hidden]+.past-wrap{margin-top:0}
+#rest-wrap+.past-wrap{margin-top:clamp(40px,6vw,64px)}
+.stone .band-img::after{display:none}
+.cc.np{aspect-ratio:4/5}
+.cc.np h3{font-size:1.05rem}
+.cc.np .cc-meta{padding:16px}
+.nall .ngrid{grid-template-columns:repeat(2,1fr)}
+@media(max-width:820px){.nall .ngrid{grid-template-columns:1fr}}
+@media(max-width:560px){.pgrid .np:nth-child(3){display:none}}

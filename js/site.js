@@ -220,7 +220,7 @@
     if (!li || e.target.closest("a")) return;
     openCromo(li.dataset.g, +li.dataset.i);
   }
-  for (const id of ["#events", "#past"]) {
+  for (const id of ["#events", "#events-rest", "#past"]) {
     $(id).addEventListener("click", evOpen);
     $(id).addEventListener("keydown", (e) => {
       if ((e.key === "Enter" || e.key === " ") && e.target.matches("li.event")) { e.preventDefault(); evOpen(e); }
@@ -230,7 +230,11 @@
     const today = localToday();
     UP = events.filter((e) => e.date >= today).sort((a, b) => a.date.localeCompare(b.date));
     PAST = events.filter((e) => e.date < today).sort((a, b) => b.date.localeCompare(a.date));
-    $("#events").innerHTML = UP.map((e, i) => evHTML(e, false, i)).join("");
+    $("#events").innerHTML = UP.slice(0, 3).map((e, i) => evHTML(e, false, i)).join("");   // resumen: las 3 próximas
+    const rest = UP.slice(3);
+    $("#events-rest").innerHTML = rest.map((e, k) => evHTML(e, false, 3 + k)).join("");
+    $("#rest-wrap").hidden = !rest.length;
+    $("#ctoggle").hidden = !(rest.length || PAST.length);
     $("#events-empty").hidden = UP.length > 0;
     const ns = $("#next-show");
     if (UP.length) {
@@ -407,6 +411,17 @@
     $("#news-empty").hidden = NEWS.length > 0;
     reveal(g);
   }
+  function renderNPrev() {
+    $("#nprev").innerHTML = NEWS.slice(0, 3).map((n, i) => {
+      const img = n.image_url && safe(n.image_url);
+      return `<button class="cc np" data-i="${i}" aria-label="Leer noticia: ${esc(n.title)}">
+        <div class="vt">${img ? `<img src="${esc(img)}" alt="" loading="lazy">` : '<div class="nc-ph">★</div>'}</div>
+        <span class="mhint">Leer</span>
+        <div class="cc-meta"><h3>${esc(n.title)}</h3><p class="cc-pill">${esc(fmtDate(n.published_at))}</p></div>
+      </button>`;
+    }).join("");
+  }
+  $("#nprev").addEventListener("click", (e) => { const b = e.target.closest(".cc"); if (b) openCromo("n", +b.dataset.i); });
   $("#ngrid").addEventListener("click", (e) => { const b = e.target.closest(".cc"); if (b) openCromo("n", +b.dataset.i); });
   $("#nmore").addEventListener("click", renderNews);
 
@@ -468,6 +483,8 @@
       if (show) { reveal(p); p.scrollIntoView({ behavior: reduce ? "auto" : "smooth", block: "nearest" }); }
     });
   }
+  toggler("#ctoggle", "#call", "Ver todos los conciertos", "Ocultar conciertos");
+  toggler("#ntoggle", "#nall", "Ver todas las noticias", "Ocultar noticias");
   toggler("#vtoggle", "#vall", "Ver todos los vídeos", "Ocultar vídeos");
   toggler("#gtoggle", "#gall", "Ver galería", "Ocultar galería");
   toggler("#btoggle", "#ball", "Conoce a la banda", "Ocultar integrantes");
@@ -488,7 +505,7 @@
     renderVHero();
     PH = photos; renderChips(); resetPhotos(); renderPrev();
     if (!PH.length) $("#pprev").innerHTML = $("#masonry").innerHTML = '<p class="empty">Muy pronto, fotos nuevas.</p>';
-    NEWS = news; nShown = 0; $("#ngrid").innerHTML = ""; renderNews();
+    NEWS = news; nShown = 0; $("#ngrid").innerHTML = ""; renderNews(); renderNPrev(); $("#ntoggle").hidden = NEWS.length <= 3;
     renderMembers(members);
     reveal();
   }
