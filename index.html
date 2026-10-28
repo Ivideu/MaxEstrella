@@ -68,64 +68,88 @@
     </div>
   </div>
 
-  <!-- CONCIERTOS -->
+  <!-- CONCIERTOS (texto a la derecha) -->
   <section class="section paper" id="conciertos">
-    <div class="wrap">
-      <header class="sec-head reveal"><p class="eyebrow">Agenda</p><h2>Próximos conciertos</h2></header>
-      <ul class="events" id="events"></ul>
-      <p class="empty reveal" id="events-empty" hidden>Pronto anunciaremos nuevas fechas. ¿Quieres a Max Estrella en tu sala? <a href="#contacto">Escríbenos</a>.</p>
-      <div class="past-wrap" id="past-wrap" hidden>
-        <h3 class="sub reveal">Últimos conciertos</h3>
-        <ul class="events past-list" id="past"></ul>
-        <div class="more"><button class="btn dark-btn" id="past-more" hidden>Ver más conciertos</button></div>
+    <div class="wrap split flip">
+      <header class="side reveal">
+        <h2>Conciertos</h2><span class="rule"></span>
+        <p class="blurb">Salas, festivales y eventos privados. Mira dónde tocamos y cómo fueron los últimos directos.</p>
+        <a class="btn dark-btn" href="#contacto">Contratar al grupo</a>
+      </header>
+      <div class="main-col">
+        <ul class="events" id="events"></ul>
+        <p class="empty reveal" id="events-empty" hidden>Pronto anunciaremos nuevas fechas. ¿Quieres a Max Estrella en tu sala? <a href="#contacto">Escríbenos</a>.</p>
+        <div class="past-wrap" id="past-wrap" hidden>
+          <h3 class="sub reveal">Últimos conciertos</h3>
+          <ul class="events past-list" id="past"></ul>
+          <div class="more"><button class="btn dark-btn" id="past-more" hidden>Ver más conciertos</button></div>
+        </div>
       </div>
     </div>
   </section>
 
-  <!-- MÚSICA -->
+  <!-- MÚSICA (texto a la izquierda) -->
   <section class="section dark" id="musica">
-    <div class="wrap">
-      <header class="sec-head reveal"><p class="eyebrow">Escúchanos</p><h2>Música</h2></header>
-      <div class="tgrid" id="tgrid"></div>
-      <div class="more" id="spotify-more" hidden><a class="btn ghost" id="spotify-link" href="#" target="_blank" rel="noopener">Escuchar todo en Spotify</a></div>
+    <div class="wrap split">
+      <header class="side reveal">
+        <h2>Música</h2><span class="rule"></span>
+        <p class="blurb">Canciones que nacen de la vida, de lo que sentimos y de lo que nos rodea.</p>
+        <div class="side-btn" id="spotify-more" hidden><a class="btn ghost" id="spotify-link" href="#" target="_blank" rel="noopener">Escuchar en Spotify</a></div>
+      </header>
+      <div class="main-col"><div class="tgrid" id="tgrid"></div></div>
     </div>
   </section>
 
-  <!-- VIDEOS -->
+  <!-- VIDEOS (texto a la derecha) -->
   <section class="section dark" id="videos">
-    <div class="wrap">
-      <header class="sec-head reveal"><p class="eyebrow">En escena y en el estudio</p><h2>Vídeos</h2></header>
-      <div class="vgrid" id="vgrid"></div>
-      <div class="more"><button class="btn ghost" id="vmore" hidden>Ver más vídeos</button></div>
+    <div class="wrap split flip">
+      <header class="side reveal">
+        <h2>Vídeos</h2><span class="rule"></span>
+        <p class="blurb">Imágenes que cuentan lo que somos. En el estudio, en directo, en la carretera… y en la vida.</p>
+        <button class="btn ghost" id="vmore" hidden>Ver más vídeos</button>
+      </header>
+      <div class="main-col"><div class="vgrid" id="vgrid"></div></div>
     </div>
   </section>
 
-  <!-- FOTOS -->
+  <!-- FOTOS (texto a la izquierda) -->
   <section class="section dark alt" id="fotos">
-    <div class="wrap">
-      <header class="sec-head reveal"><p class="eyebrow">Galería</p><h2>Fotos</h2></header>
-      <div class="chips" id="chips" role="tablist" aria-label="Filtrar fotos"></div>
-      <div class="masonry" id="masonry"></div>
-      <div class="more"><button class="btn ghost" id="pmore" hidden>Ver más fotos</button></div>
+    <div class="wrap split">
+      <header class="side reveal">
+        <h2>Fotos</h2><span class="rule"></span>
+        <p class="blurb">Momentos, lugares, personas. La mirada detrás de cada canción.</p>
+        <button class="btn ghost" id="pmore" hidden>Ver más fotos</button>
+      </header>
+      <div class="main-col">
+        <div class="chips" id="chips" role="tablist" aria-label="Filtrar fotos"></div>
+        <div class="masonry" id="masonry"></div>
+      </div>
     </div>
   </section>
 
-  <!-- NOTICIAS -->
+  <!-- NOTICIAS (texto a la derecha) -->
   <section class="section paper" id="noticias">
-    <div class="wrap">
-      <header class="sec-head reveal"><p class="eyebrow">Lo último</p><h2>Noticias</h2></header>
-      <div class="ngrid" id="ngrid"></div>
-      <p class="empty" id="news-empty" hidden>Todavía no hay noticias. ¡Vuelve pronto!</p>
-      <div class="more"><button class="btn dark-btn" id="nmore" hidden>Ver más noticias</button></div>
+    <div class="wrap split flip">
+      <header class="side reveal">
+        <h2>Noticias</h2><span class="rule"></span>
+        <p class="blurb">Lo último del grupo: conciertos, lanzamientos y novedades.</p>
+        <button class="btn dark-btn" id="nmore" hidden>Ver más noticias</button>
+      </header>
+      <div class="main-col">
+        <div class="ngrid" id="ngrid"></div>
+        <p class="empty" id="news-empty" hidden>Todavía no hay noticias. ¡Vuelve pronto!</p>
+      </div>
     </div>
   </section>
 
-  <!-- BANDA -->
+  <!-- BANDA (texto a la izquierda) -->
   <section class="section dark" id="banda">
-    <div class="wrap">
-      <header class="sec-head reveal"><p class="eyebrow">Quiénes somos</p><h2>La banda</h2></header>
-      <p class="bio reveal" id="bio"></p>
-      <div class="mgrid" id="mgrid"></div>
+    <div class="wrap split">
+      <header class="side reveal">
+        <h2>La banda</h2><span class="rule"></span>
+        <p class="bio" id="bio"></p>
+      </header>
+      <div class="main-col"><div class="mgrid" id="mgrid"></div></div>
     </div>
   </section>
 
