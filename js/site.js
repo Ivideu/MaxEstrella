@@ -344,7 +344,7 @@
     if (!v) { b.hidden = true; return; }
     const p = parseVideo(v.url);
     const src = (v.poster_url && safe(v.poster_url)) || (p.kind === "youtube" ? `https://i.ytimg.com/vi/${p.id}/hqdefault.jpg` : "images/escenario.jpg");
-    b.innerHTML = `<img src="${esc(src)}" alt=""><span class="vplay"><svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true"><path d="M8 5v14l11-7z" fill="currentColor"/></svg></span>`;
+    b.innerHTML = `<img src="${esc(src)}" alt="">`;
     b.setAttribute("aria-label", "Ver vídeo: " + (v.title || "destacado"));
   }
   $("#vhero").addEventListener("click", () => openCromo("v", 0));
