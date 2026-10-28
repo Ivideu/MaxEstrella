@@ -15,7 +15,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Alfa+Slab+One&family=Inter:wght@400;500;600&family=Lora:ital,wght@0,400;0,500;1,400&family=Oswald:wght@400;500;600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/site.css">
+  <link rel="stylesheet" href="css/site.css?v=7">
 </head>
 <body>
 <a class="skip" href="#main">Saltar al contenido</a>
@@ -25,8 +25,8 @@
   <nav id="menu" aria-label="Principal">
     <a href="#conciertos">Conciertos</a>
     <a href="#musica">Música</a>
-    <a href="#videos">Vídeos</a>
     <a href="#fotos">Fotos</a>
+    <a href="#videos">Vídeos</a>
     <a href="#noticias">Noticias</a>
     <a href="#banda">La banda</a>
     <a href="#contacto" class="pill">contacto</a>
@@ -104,24 +104,8 @@
     </div>
   </section>
 
-  <!-- VÍDEOS: imagen a pantalla completa a la izquierda, texto a la derecha -->
-  <section class="section strip bleed stone" id="videos">
-    <div class="band">
-      <button class="band-img" id="vhero" type="button" aria-label="Ver vídeo destacado"></button>
-      <div class="band-text">
-        <h2>Vídeos</h2><span class="rule"></span>
-        <p class="blurb">Imágenes que cuentan lo que somos. En el estudio, en directo, en la carretera… y en la vida.</p>
-        <button class="btn-line" id="vtoggle" type="button" aria-expanded="false" aria-controls="vall">Ver todos los vídeos <span aria-hidden="true">→</span></button>
-      </div>
-    </div>
-    <div class="wrap vall" id="vall" hidden>
-      <div class="vgrid" id="vgrid"></div>
-      <div class="more"><button class="btn dark-btn" id="vmore" hidden>Ver más vídeos</button></div>
-    </div>
-  </section>
-
-  <!-- FOTOS: banda clara, texto a la izquierda y 3 fotos -->
-  <section class="section strip dark flat" id="fotos">
+  <!-- FOTOS (claro): banda clara, texto a la izquierda y 3 fotos -->
+  <section class="section strip stone" id="fotos">
     <div class="wrap split">
       <header class="side reveal">
         <h2>Fotos</h2><span class="rule"></span>
@@ -133,7 +117,23 @@
     <div class="wrap gall" id="gall" hidden>
       <div class="chips" id="chips" role="tablist" aria-label="Filtrar fotos"></div>
       <div class="masonry" id="masonry"></div>
-      <div class="more"><button class="btn ghost" id="pmore" hidden>Ver más fotos</button></div>
+      <div class="more"><button class="btn dark-btn" id="pmore" hidden>Ver más fotos</button></div>
+    </div>
+  </section>
+
+  <!-- VÍDEOS (oscuro): imagen a pantalla completa a la izquierda, texto a la derecha -->
+  <section class="section strip bleed dark flat deep" id="videos">
+    <div class="band">
+      <button class="band-img" id="vhero" type="button" aria-label="Ver vídeo destacado"></button>
+      <div class="band-text">
+        <h2>Vídeos</h2><span class="rule"></span>
+        <p class="blurb">Imágenes que cuentan lo que somos. En el estudio, en directo, en la carretera… y en la vida.</p>
+        <button class="btn-line" id="vtoggle" type="button" aria-expanded="false" aria-controls="vall">Ver todos los vídeos <span aria-hidden="true">→</span></button>
+      </div>
+    </div>
+    <div class="wrap vall" id="vall" hidden>
+      <div class="vgrid" id="vgrid"></div>
+      <div class="more"><button class="btn ghost" id="vmore" hidden>Ver más vídeos</button></div>
     </div>
   </section>
 
@@ -216,7 +216,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="js/config.js"></script>
-<script src="js/api.js"></script>
-<script src="js/site.js"></script>
+<script src="js/api.js?v=7"></script>
+<script src="js/site.js?v=7"></script>
 </body>
 </html>

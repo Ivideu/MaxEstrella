@@ -489,3 +489,11 @@ button.band-img:hover img{transform:scale(1.04);filter:grayscale(.4) brightness(
 .nall .ngrid{grid-template-columns:repeat(2,1fr)}
 @media(max-width:820px){.nall .ngrid{grid-template-columns:1fr}}
 @media(max-width:560px){.pgrid .np:nth-child(3){display:none}}
+
+/* ---------- GALERÍA desplegada: miniaturas pequeñas ---------- */
+.gall .masonry{columns:6 130px;column-gap:10px}
+.gall .cc.ph{margin-bottom:10px}
+.gall .cc.ph .cc-meta{padding:8px}
+.gall .cc.ph h3{font-size:.7rem;line-height:1.15}
+.gall .cc.ph .cc-pill{font-size:.62rem;padding:0 6px;margin-top:4px}
+.gall .mhint{display:none}

@@ -493,21 +493,33 @@
   async function init() {
     reveal();
     const [events, tracks, videos, photos, news, members, S] = await Promise.all([M.get("events"), M.get("tracks"), M.get("videos"), M.get("photos"), M.get("news"), M.get("members"), M.settings()]);
-    renderSettings(S);
-    renderEvents(events);
-    TRK = tracks;
-    if (TRK.length) renderTracks(); else $("#tgrid").innerHTML = '<p class="empty">Muy pronto, música nueva.</p>';
-    const spUrl = S.spotify && safe(S.spotify);
-    $("#tmore").hidden = TRK.length <= TPREV;                 // más de 4 canciones: "Ver toda la música"
-    if (spUrl) { $("#spotify-link").href = spUrl; $("#spotify-more").hidden = TRK.length > TPREV; }
-    VIDS = videos; vShown = 0; $("#vgrid").innerHTML = "";
-    if (VIDS.length) renderVideos(); else $("#vgrid").innerHTML = '<p class="empty">Muy pronto, vídeos nuevos.</p>';
-    renderVHero();
-    PH = photos; renderChips(); resetPhotos(); renderPrev();
-    if (!PH.length) $("#pprev").innerHTML = $("#masonry").innerHTML = '<p class="empty">Muy pronto, fotos nuevas.</p>';
-    NEWS = news; nShown = 0; $("#ngrid").innerHTML = ""; renderNews(); renderNPrev(); $("#ntoggle").hidden = NEWS.length <= 3;
-    renderMembers(members);
+    // cada bloque va por separado: si uno falla, los demás capítulos se siguen mostrando
+    const run = (name, fn) => { try { fn(); } catch (err) { console.error("Error en " + name, err); } };
+    run("ajustes", () => renderSettings(S));
+    run("conciertos", () => renderEvents(events));
+    run("música", () => {
+      TRK = tracks;
+      if (TRK.length) renderTracks(); else $("#tgrid").innerHTML = '<p class="empty">Muy pronto, música nueva.</p>';
+      const spUrl = S.spotify && safe(S.spotify);
+      $("#tmore").hidden = TRK.length <= TPREV;                 // más de 4 canciones: "Ver toda la música"
+      if (spUrl) { $("#spotify-link").href = spUrl; $("#spotify-more").hidden = TRK.length > TPREV; }
+    });
+    run("vídeos", () => {
+      VIDS = videos; vShown = 0; $("#vgrid").innerHTML = "";
+      if (VIDS.length) renderVideos(); else $("#vgrid").innerHTML = '<p class="empty">Muy pronto, vídeos nuevos.</p>';
+      renderVHero();
+    });
+    run("fotos", () => {
+      PH = photos; renderChips(); resetPhotos(); renderPrev();
+      if (!PH.length) $("#pprev").innerHTML = $("#masonry").innerHTML = '<p class="empty">Muy pronto, fotos nuevas.</p>';
+    });
+    run("noticias", () => {
+      NEWS = news; nShown = 0; $("#ngrid").innerHTML = ""; renderNews(); renderNPrev();
+      $("#ntoggle").hidden = NEWS.length <= 3;
+    });
+    run("banda", () => renderMembers(members));
     reveal();
   }
+
   init();
 })();
