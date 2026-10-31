@@ -87,7 +87,7 @@
       label: "Vídeos", table: "videos", order: [["featured", false], ["created_at", false]], files: ["url", "poster_url"],
       fields: [
         { k: "url", l: "Enlace del vídeo", t: "video", req: 1 },
-        { k: "title", l: "Título", ph: "Directo en Fun House" },
+        { k: "title", l: "Título (opcional)", ph: "Si lo dejas vacío se usa el título de YouTube", help: "En vídeos de YouTube el título se coge solo." },
         { k: "poster_url", l: "Miniatura (opcional)", t: "image", folder: "posters", help: "YouTube y los MP4 generan su miniatura solos; para Instagram y TikTok es recomendable subir una." },
         { k: "featured", l: "Destacado (aparece el primero y más grande)", t: "check" }
       ],
@@ -284,6 +284,7 @@
       <div><div class="t">${esc(o.t)}${o.tag ? ` <span class="tag ${o.tag === "borrador" ? "draft" : o.tag === "destacado" ? "star" : ""}">${esc(o.tag)}</span>` : ""}</div><div class="s">${esc(o.s || "")}</div></div>
       <div class="acts"><button class="btn ghost sm" data-e="${r.id}">Editar</button><button class="btn danger sm" data-d="${r.id}">Borrar</button></div></div>`; }).join("");
     if (key === "tracks") fillSpotify(box, data);
+    if (key === "videos") fillYoutube(box, data);
     const byId = Object.fromEntries(data.map((r) => [r.id, r]));
     box.addEventListener("click", (ev) => {
       const e = ev.target.closest("[data-e]"), d = ev.target.closest("[data-d]");
@@ -311,6 +312,31 @@
     } catch (e) { console.error(e); }
   }
 
+  /* ---------- vídeos: el título se coge de YouTube (best effort, nunca rompe el panel) ---------- */
+  async function ytTitle(url) {
+    try {
+      const p = parseVideo(url); if (!p || p.kind !== "youtube") return "";
+      const r = await fetch("https://www.youtube.com/oembed?format=json&url=" + encodeURIComponent("https://www.youtube.com/watch?v=" + p.id));
+      if (!r.ok) return "";
+      return ((await r.json()).title || "").trim();
+    } catch (e) { return ""; }
+  }
+  function fillYoutube(box, data) {
+    try {
+      const rows = box.querySelectorAll(".row");
+      data.forEach((r, i) => {
+        if (r.title || !rows[i]) return;
+        ytTitle(r.url).then(async (t) => {
+          if (!t) return;
+          const el = rows[i].querySelector(".t");
+          if (el && el.firstChild && el.firstChild.nodeType === 3) el.firstChild.textContent = t;
+          r.title = t;
+          await sb.from("videos").update({ title: t }).eq("id", r.id);   // se guarda para que también salga en la web
+        }).catch(() => {});
+      });
+    } catch (e) { console.error(e); }
+  }
+
   async function removeRow(key, row) {
     if (!confirm("¿Borrar definitivamente? Esta acción no se puede deshacer.")) return;
     const E = ENT[key];
@@ -332,6 +358,7 @@
       if (miss) { $("#ferr").textContent = `Falta rellenar: ${miss.l}`; return; }
       if (E.fields.some((f) => f.t === "spotify") && !parseSpotify(o.spotify_url)) { $("#ferr").textContent = "Ese enlace no es de Spotify. Copia el enlace de la canción desde Spotify (debe empezar por https://open.spotify.com/…)."; return; }
       const btn = form.querySelector("button[type=submit]"); btn.disabled = true;
+      if (key === "videos" && !o.title) { const t = await ytTitle(o.url); if (t) o.title = t; }
       const res = row ? await sb.from(E.table).update(o).eq("id", row.id) : await sb.from(E.table).insert(o);
       btn.disabled = false;
       if (res.error) return fail(res.error);
