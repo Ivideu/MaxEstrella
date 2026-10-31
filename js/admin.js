@@ -17,7 +17,7 @@
     app.innerHTML = `<div class="center"><div class="card wide">
       <div class="brand">MAX <i>★</i> ESTRELLA</div>
       <h1>Panel de administración</h1>
-      <p>El panel necesita conectarse a Supabase (la base de datos gratuita donde se guardan conciertos, noticias, fotos y vídeos). Todavía no está configurado:</p>
+      <p>El panel necesita conectarse a Supabase (la base de datos gratuita donde se guardan conciertos, música, fotos y vídeos). Todavía no está configurado:</p>
       <ol>
         <li>Crea un proyecto en <b>supabase.com</b>.</li>
         <li>En <code>SQL Editor</code> pega y ejecuta el archivo <code>supabase/schema.sql</code>.</li>
@@ -73,16 +73,6 @@
       ],
       row: (r) => ({ t: r.title, s: `${fmt(r.date)} · ${[r.venue, r.city].filter(Boolean).join(" · ")}`, tag: r.date < new Date().toISOString().slice(0, 10) ? "pasado" : "" })
     },
-    news: {
-      label: "Noticias", table: "news", order: [["published_at", false]], files: ["image_url"],
-      fields: [
-        { k: "title", l: "Titular", req: 1 },
-        { k: "body", l: "Texto de la noticia", t: "textarea", help: "Los saltos de línea se respetan." },
-        { k: "image_url", l: "Foto (opcional)", t: "image", folder: "news" },
-        { k: "published", l: "Visible en la web (desmarca para guardarla como borrador)", t: "check", def: true }
-      ],
-      row: (r) => ({ t: r.title, s: fmtTs(r.published_at), img: r.image_url, tag: r.published ? "" : "borrador" })
-    },
     tracks: {
       label: "Música", table: "tracks", order: [["sort", true], ["created_at", false]], files: [],
       fields: [
@@ -132,7 +122,7 @@
     { k: "facebook", l: "Facebook (enlace)", t: "url" },
     { k: "spotify", l: "Spotify (enlace)", t: "url" }
   ];
-  const TABS = [["events", "Conciertos"], ["tracks", "Música"], ["news", "Noticias"], ["videos", "Vídeos"], ["photos", "Fotos"], ["members", "La banda"], ["inquiries", "Mensajes"], ["settings", "Ajustes"]];
+  const TABS = [["events", "Conciertos"], ["tracks", "Música"], ["videos", "Vídeos"], ["photos", "Fotos"], ["members", "La banda"], ["inquiries", "Mensajes"], ["settings", "Ajustes"]];
 
   /* ---------- campos de formulario ---------- */
   function fieldHTML(f, v) {

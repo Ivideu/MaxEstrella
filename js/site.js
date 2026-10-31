@@ -67,7 +67,7 @@
   const modal = $("#modal"), mbody = $("#modal-body");
   const pad = (x) => String(x).padStart(2, "0");
   const CUR = { k: null, i: 0 };
-  const LIST = { m: () => MEM, p: () => phView, v: () => VIDS, n: () => NEWS, u: () => UP, e: () => PAST };
+  const LIST = { m: () => MEM, p: () => phView, v: () => VIDS, u: () => UP, e: () => PAST };
   function closeAll() {
     modal.hidden = true; mbody.innerHTML = ""; CUR.k = null;
     if (!nav.classList.contains("open")) document.body.style.overflow = "";
@@ -141,12 +141,6 @@
         extra = p.kind === "link" && u ? `<a class="btn sm" href="${u}" target="_blank" rel="noopener">Abrir enlace</a>` : `<p class="cr-bio">Vídeo de ejemplo: añade el tuyo desde el panel de administración.</p>`;
       }
       return { cls, tilt: 6, html: frame(`Vídeo ${pad(i + 1)} / ${pad(n)}`, media, `<h3>${esc(v.title || "")}</h3><p class="cr-role">${PLAT[p.kind]}</p>${extra}`) };
-    },
-    n(nw, i, n) {
-      const img = nw.image_url && safe(nw.image_url);
-      return { cls: "noti", tilt: 8, html: frame(esc(fmtDate(nw.published_at)),
-        img ? `<div class="cr-photo news"><img src="${esc(img)}" alt="">${STAR}</div>` : "",
-        `<h3>${esc(nw.title)}</h3><div class="cr-text">${esc(nw.body || "")}</div>`) };
     },
     u: (ev, i, n) => fichaEvento(ev, i, n, false),
     e: (ev, i, n) => fichaEvento(ev, i, n, true)
@@ -393,38 +387,6 @@
   $("#pmore").addEventListener("click", morePhotos);
   $("#masonry").addEventListener("click", (e) => { const b = e.target.closest(".cc"); if (b) openCromo("p", +b.dataset.i); });
 
-  /* ---------- noticias ---------- */
-  let NEWS = [], nShown = 0;
-  function renderNews() {
-    const g = $("#ngrid");
-    const slice = NEWS.slice(nShown, nShown + 6);
-    g.insertAdjacentHTML("beforeend", slice.map((n, k) => {
-      const ex = (n.body || "").replace(/\s+/g, " ").slice(0, 100);
-      const img = n.image_url && safe(n.image_url);
-      return `<button class="cc nc reveal" data-i="${nShown + k}" aria-label="Leer noticia: ${esc(n.title)}">
-        <div class="vt">${img ? `<img src="${esc(img)}" alt="" loading="lazy">` : '<div class="nc-ph">★</div>'}</div>
-        <div class="nc-body"><time>${esc(fmtDate(n.published_at))}</time><h3>${esc(n.title)}</h3>${ex ? `<p class="nc-ex">${esc(ex)}${(n.body || "").length > 100 ? "…" : ""}</p>` : ""}<span class="nc-rm">Leer más →</span></div>
-      </button>`;
-    }).join(""));
-    nShown += slice.length;
-    $("#nmore").hidden = nShown >= NEWS.length;
-    $("#news-empty").hidden = NEWS.length > 0;
-    reveal(g);
-  }
-  function renderNPrev() {
-    $("#nprev").innerHTML = NEWS.slice(0, 3).map((n, i) => {
-      const img = n.image_url && safe(n.image_url);
-      return `<button class="cc np" data-i="${i}" aria-label="Leer noticia: ${esc(n.title)}">
-        <div class="vt">${img ? `<img src="${esc(img)}" alt="" loading="lazy">` : '<div class="nc-ph">★</div>'}</div>
-        <span class="mhint">Leer</span>
-        <div class="cc-meta"><h3>${esc(n.title)}</h3><p class="cc-pill">${esc(fmtDate(n.published_at))}</p></div>
-      </button>`;
-    }).join("");
-  }
-  $("#nprev").addEventListener("click", (e) => { const b = e.target.closest(".cc"); if (b) openCromo("n", +b.dataset.i); });
-  $("#ngrid").addEventListener("click", (e) => { const b = e.target.closest(".cc"); if (b) openCromo("n", +b.dataset.i); });
-  $("#nmore").addEventListener("click", renderNews);
-
   /* ---------- banda ---------- */
   let MEM = [];
   function renderMembers(ms) {
@@ -484,7 +446,6 @@
     });
   }
   toggler("#ctoggle", "#call", "Ver todos los conciertos", "Ocultar conciertos");
-  toggler("#ntoggle", "#nall", "Ver todas las noticias", "Ocultar noticias");
   toggler("#vtoggle", "#vall", "Ver todos los vídeos", "Ocultar vídeos");
   toggler("#gtoggle", "#gall", "Ver galería", "Ocultar galería");
   toggler("#btoggle", "#ball", "Conoce a la banda", "Ocultar integrantes");
@@ -492,7 +453,7 @@
   /* ---------- carga ---------- */
   async function init() {
     reveal();
-    const [events, tracks, videos, photos, news, members, S] = await Promise.all([M.get("events"), M.get("tracks"), M.get("videos"), M.get("photos"), M.get("news"), M.get("members"), M.settings()]);
+    const [events, tracks, videos, photos, members, S] = await Promise.all([M.get("events"), M.get("tracks"), M.get("videos"), M.get("photos"), M.get("members"), M.settings()]);
     // cada bloque va por separado: si uno falla, los demás capítulos se siguen mostrando
     const run = (name, fn) => { try { fn(); } catch (err) { console.error("Error en " + name, err); } };
     run("ajustes", () => renderSettings(S));
@@ -512,10 +473,6 @@
     run("fotos", () => {
       PH = photos; renderChips(); resetPhotos(); renderPrev();
       if (!PH.length) $("#pprev").innerHTML = $("#masonry").innerHTML = '<p class="empty">Muy pronto, fotos nuevas.</p>';
-    });
-    run("noticias", () => {
-      NEWS = news; nShown = 0; $("#ngrid").innerHTML = ""; renderNews(); renderNPrev();
-      $("#ntoggle").hidden = NEWS.length <= 3;
     });
     run("banda", () => renderMembers(members));
     reveal();

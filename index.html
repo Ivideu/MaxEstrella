@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Max Estrella · Rock en directo desde Madrid</title>
-  <meta name="description" content="Max Estrella: rock en directo desde Madrid. Próximos conciertos, vídeos, fotos, noticias y contacto del grupo.">
+  <meta name="description" content="Max Estrella: rock en directo desde Madrid. Próximos conciertos, música, vídeos, fotos y contacto del grupo.">
   <meta name="theme-color" content="#0b0909">
   <meta property="og:title" content="Max Estrella · Rock en directo">
   <meta property="og:description" content="CANCIONES QUE ENAMORAN. Canciones que emocionan.">
@@ -23,11 +23,10 @@
 <header class="nav" id="nav">
   <a class="brand" href="#inicio" aria-label="Max Estrella, inicio">MAX <i>★</i> ESTRELLA</a>
   <nav id="menu" aria-label="Principal">
-    <a href="#conciertos">Conciertos</a>
     <a href="#musica">Música</a>
     <a href="#fotos">Fotos</a>
     <a href="#videos">Vídeos</a>
-    <a href="#noticias">Noticias</a>
+    <a href="#conciertos">Conciertos</a>
     <a href="#banda">La banda</a>
     <a href="#contacto" class="pill">contacto</a>
   </nav>
@@ -56,7 +55,7 @@
         <a class="next-show" id="next-show" href="#conciertos" hidden></a>
       </div>
     </div>
-    <a class="scroll-hint" href="#conciertos" aria-label="Bajar"><span></span></a>
+    <a class="scroll-hint" href="#musica" aria-label="Bajar"><span></span></a>
   </section>
 
   <div class="marquee" aria-hidden="true">
@@ -67,29 +66,6 @@
       <span>ROCK EN DIRECTO <i>★</i> MADRID <i>★</i> CANCIONES QUE ENAMORAN <i>★</i> CANCIONES QUE EMOCIONAN <i>★</i> </span>
     </div>
   </div>
-
-  <!-- CONCIERTOS (claro): próximas fechas + "ver todos" -->
-  <section class="section strip stone" id="conciertos">
-    <div class="wrap split">
-      <header class="side reveal">
-        <h2>Conciertos</h2><span class="rule"></span>
-        <p class="blurb">Salas, festivales y eventos privados. Mira dónde tocamos y cómo fueron los últimos directos.</p>
-        <button class="btn-line" id="ctoggle" type="button" aria-expanded="false" aria-controls="call" hidden>Ver todos los conciertos <span aria-hidden="true">→</span></button>
-      </header>
-      <div class="main-col">
-        <ul class="events" id="events"></ul>
-        <p class="empty reveal" id="events-empty" hidden>Pronto anunciaremos nuevas fechas. ¿Quieres a Max Estrella en tu sala? <a href="#contacto">Escríbenos</a>.</p>
-      </div>
-    </div>
-    <div class="wrap call" id="call" hidden>
-      <div id="rest-wrap" hidden><h3 class="sub">Más fechas</h3><ul class="events" id="events-rest"></ul></div>
-      <div class="past-wrap" id="past-wrap" hidden>
-        <h3 class="sub">Últimos conciertos</h3>
-        <ul class="events past-list" id="past"></ul>
-        <div class="more"><button class="btn dark-btn" id="past-more" hidden>Ver más conciertos</button></div>
-      </div>
-    </div>
-  </section>
 
   <!-- MÚSICA: 4 canciones + "ver toda la música" -->
   <section class="section strip dark flat" id="musica">
@@ -137,22 +113,26 @@
     </div>
   </section>
 
-  <!-- NOTICIAS (claro): 3 últimas + "ver todas" -->
-  <section class="section strip stone" id="noticias">
+  <!-- CONCIERTOS (claro): próximas fechas + "ver todos" -->
+  <section class="section strip stone" id="conciertos">
     <div class="wrap split">
       <header class="side reveal">
-        <h2>Noticias</h2><span class="rule"></span>
-        <p class="blurb">Lo último del grupo: conciertos, lanzamientos y novedades.</p>
-        <button class="btn-line" id="ntoggle" type="button" aria-expanded="false" aria-controls="nall" hidden>Ver todas las noticias <span aria-hidden="true">→</span></button>
+        <h2>Conciertos</h2><span class="rule"></span>
+        <p class="blurb">Salas, festivales y eventos privados. Mira dónde tocamos y cómo fueron los últimos directos.</p>
+        <button class="btn-line" id="ctoggle" type="button" aria-expanded="false" aria-controls="call" hidden>Ver todos los conciertos <span aria-hidden="true">→</span></button>
       </header>
       <div class="main-col">
-        <div class="pgrid" id="nprev"></div>
-        <p class="empty" id="news-empty" hidden>Todavía no hay noticias. ¡Vuelve pronto!</p>
+        <ul class="events" id="events"></ul>
+        <p class="empty reveal" id="events-empty" hidden>Pronto anunciaremos nuevas fechas. ¿Quieres a Max Estrella en tu sala? <a href="#contacto">Escríbenos</a>.</p>
       </div>
     </div>
-    <div class="wrap nall" id="nall" hidden>
-      <div class="ngrid" id="ngrid"></div>
-      <div class="more"><button class="btn dark-btn" id="nmore" hidden>Ver más noticias</button></div>
+    <div class="wrap call" id="call" hidden>
+      <div id="rest-wrap" hidden><h3 class="sub">Más fechas</h3><ul class="events" id="events-rest"></ul></div>
+      <div class="past-wrap" id="past-wrap" hidden>
+        <h3 class="sub">Últimos conciertos</h3>
+        <ul class="events past-list" id="past"></ul>
+        <div class="more"><button class="btn dark-btn" id="past-more" hidden>Ver más conciertos</button></div>
+      </div>
     </div>
   </section>
 
@@ -206,7 +186,7 @@
   <p class="small">© <span id="year"></span> Max Estrella · Todos los derechos reservados · <a href="admin.html">Acceso banda</a></p>
 </footer>
 
-<!-- Ficha tipo cromo (vídeos, fotos, noticias, conciertos, banda) -->
+<!-- Ficha tipo cromo (vídeos, fotos, conciertos, banda) -->
 <div class="modal" id="modal" hidden role="dialog" aria-modal="true">
   <button class="modal-x" aria-label="Cerrar">×</button>
   <div class="modal-body" id="modal-body"></div>
