@@ -360,10 +360,11 @@
     g.insertAdjacentHTML("beforeend", slice.map((v, k) => {
       const i = vShown + k, p = parseVideo(v.url);
       return `<button class="cc vc reveal" data-i="${i}" aria-label="Ver vídeo: ${esc(v.title || "vídeo")}">
-        <div class="vt">${vThumb(v, p)}</div>
-        ${v.featured ? '<i class="cc-star" title="Destacado">★</i>' : ""}
-        <span class="mhint">Ver vídeo</span>
-        <span class="vplay"><svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true"><path d="M8 5v14l11-7z" fill="currentColor"/></svg></span>
+        <div class="vt">${vThumb(v, p)}
+          ${v.featured ? '<i class="cc-star" title="Destacado">★</i>' : ""}
+          <span class="mhint">Ver vídeo</span>
+          <span class="vplay"><svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true"><path d="M8 5v14l11-7z" fill="currentColor"/></svg></span>
+        </div>
         <div class="cc-meta"><h3>${esc(v.title || "")}</h3><p class="cc-pill">${PLAT[p.kind]}</p></div>
       </button>`;
     }).join(""));

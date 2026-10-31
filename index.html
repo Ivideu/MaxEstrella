@@ -17,10 +17,19 @@
   <link href="https://fonts.googleapis.com/css2?family=Alfa+Slab+One&family=Inter:wght@400;500;600&family=Lora:ital,wght@0,400;0,500;1,400&family=Oswald:wght@400;500;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/site.css?v=7">
   <style>
-    /* Música: texto a la derecha y canciones a la izquierda (alterna derecha-izquierda-derecha…) */
-    @media (min-width:901px){ .split.rev{direction:rtl} .split.rev>*{direction:ltr} }
-    .tc-more{display:inline-block;margin-top:8px;font-size:.72rem;letter-spacing:.16em;text-transform:uppercase;color:inherit;opacity:.75;text-decoration:underline;text-underline-offset:4px}
-    .tc-more:hover,.tc-more:focus-visible{opacity:1}
+    .tc-more{display:inline-flex;align-items:center;gap:8px;margin-top:10px;padding:8px 16px;border:1px solid rgba(255,255,255,.28);border-radius:999px;background:rgba(255,255,255,.06);color:inherit;font-size:.72rem;font-weight:600;letter-spacing:.16em;text-transform:uppercase;text-decoration:none;transition:background .2s,border-color .2s,transform .2s,color .2s}
+    .tc-more::after{content:"→";transition:transform .2s}
+    .tc-more:hover,.tc-more:focus-visible{background:#c4283d;border-color:#c4283d;color:#fff;transform:translateY(-2px)}
+    .tc-more:hover::after,.tc-more:focus-visible::after{transform:translateX(3px)}
+    /* Vídeos: miniatura limpia y el título debajo, en una cápsula redondeada */
+    .cc.vc{aspect-ratio:auto;display:flex;flex-direction:column;align-items:flex-start;gap:12px;background:none;border:0;overflow:visible}
+    .cc.vc::after{display:none}
+    .cc.vc .vt{position:relative;inset:auto;width:100%;aspect-ratio:16/9;border:1px solid var(--line);background:#1c1515;overflow:hidden}
+    .cc.vc .vplay{top:50%;margin-top:-29px}
+    .cc.vc .cc-meta{position:static;z-index:auto;width:fit-content;max-width:100%;padding:9px 18px;border:1px solid rgba(234,223,198,.3);border-radius:22px;background:rgba(255,255,255,.06);transition:background .2s,border-color .2s,color .2s,transform .2s}
+    .cc.vc h3{font-family:var(--cond);font-size:.92rem;font-weight:500;letter-spacing:.1em;line-height:1.3;text-transform:uppercase}
+    .cc.vc .cc-pill{display:none}
+    .cc.vc:hover .cc-meta,.cc.vc:focus-visible .cc-meta{background:var(--red2);border-color:var(--red2);color:#fff;transform:translateY(-2px)}
   </style>
 </head>
 <body>
@@ -75,7 +84,7 @@
 
   <!-- MÚSICA: 4 canciones + "ver toda la música" -->
   <section class="section strip dark flat" id="musica">
-    <div class="wrap split rev">
+    <div class="wrap split flip">
       <header class="side reveal">
         <h2>Música</h2><span class="rule"></span>
         <p class="blurb">Canciones que nacen de la vida, de lo que sentimos y de lo que nos rodea.</p>
