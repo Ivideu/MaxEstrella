@@ -256,6 +256,7 @@
         <div class="tc-meta">
           <div class="tc-row"><h3>${esc(name)}</h3><button class="tc-go" type="button" aria-label="Reproducir: ${esc(name)}" ${sp ? "" : "disabled"}>${PLAYSVG}</button></div>
           <p>${t.description ? esc(t.description) : sp ? "Spotify" : "Próximamente"}</p>
+          ${sp && safe(t.spotify_url) ? `<a class="tc-more" href="${esc(safe(t.spotify_url))}" target="_blank" rel="noopener">Más</a>` : ""}
         </div>
       </article>`;
     }).join("");
