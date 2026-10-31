@@ -1,5 +1,6 @@
 (function () {
   const M = window.MAX, { sb, live, esc, parseVideo, parseSpotify } = M;
+  const spotifyMeta = M.spotifyMeta || (() => Promise.resolve(null));
   const $ = (s, r = document) => r.querySelector(s);
   const $$ = (s, r = document) => [...r.querySelectorAll(s)];
   const app = $("#app");
@@ -282,6 +283,7 @@
       ${o.img ? `<img class="thumb" src="${esc(o.img)}" alt="">` : `<div class="thumb ph">★</div>`}
       <div><div class="t">${esc(o.t)}${o.tag ? ` <span class="tag ${o.tag === "borrador" ? "draft" : o.tag === "destacado" ? "star" : ""}">${esc(o.tag)}</span>` : ""}</div><div class="s">${esc(o.s || "")}</div></div>
       <div class="acts"><button class="btn ghost sm" data-e="${r.id}">Editar</button><button class="btn danger sm" data-d="${r.id}">Borrar</button></div></div>`; }).join("");
+    if (key === "tracks") fillSpotify(box, data);
     const byId = Object.fromEntries(data.map((r) => [r.id, r]));
     box.addEventListener("click", (ev) => {
       const e = ev.target.closest("[data-e]"), d = ev.target.closest("[data-d]");
@@ -289,6 +291,26 @@
       if (d) removeRow(key, byId[d.dataset.d]);
     });
   }
+  /* ---------- música: título y carátula reales desde Spotify (best effort, nunca rompe el panel) ---------- */
+  function fillSpotify(box, data) {
+    try {
+      const rows = box.querySelectorAll(".row");
+      data.forEach((r, i) => {
+        const row = rows[i], sp = parseSpotify(r.spotify_url);
+        if (!row || !sp) return;
+        Promise.resolve(spotifyMeta(r.spotify_url)).then((m) => {
+          if (!m || !row.isConnected) return;
+          const names = { track: "Canción", album: "Álbum", playlist: "Lista", episode: "Episodio", show: "Podcast", artist: "Artista" };
+          const t = row.querySelector(".t"), s = row.querySelector(".s");
+          if (t && m.title && !r.title && t.firstChild && t.firstChild.nodeType === 3) t.firstChild.textContent = m.title;
+          if (s) s.textContent = (names[sp.type] || "Spotify") + (m.title && r.title && r.title !== m.title ? " · en Spotify: " + m.title : "") + " · " + r.spotify_url;
+          const th = row.querySelector(".thumb");
+          if (th && m.thumb) { const im = document.createElement("img"); im.className = "thumb"; im.alt = ""; im.src = m.thumb; th.replaceWith(im); }
+        }).catch(() => {});
+      });
+    } catch (e) { console.error(e); }
+  }
+
   async function removeRow(key, row) {
     if (!confirm("¿Borrar definitivamente? Esta acción no se puede deshacer.")) return;
     const E = ENT[key];
