@@ -250,7 +250,7 @@
     g.innerHTML = list.map((t, i) => {
       const sp = parseSpotify(t.spotify_url), name = t.title || (sp ? "Escuchar en Spotify" : t.title || "");
       return `<article class="tc reveal" data-i="${i}">
-        <button class="tc-btn" type="button" aria-label="Reproducir: ${esc(name)}" ${sp ? "" : "disabled"}>
+        <button class="tc-btn" type="button" aria-label="Abrir en Spotify: ${esc(name)}" title="Abrir en Spotify" ${sp ? "" : "disabled"}>
           <span class="tc-cover"><span class="tc-ph">★</span></span>
         </button>
         <div class="tc-meta">
@@ -267,7 +267,7 @@
         if (!m) return;
         const card = g.querySelector(`.tc[data-i="${i}"]`); if (!card) return;
         if (m.thumb && safe(m.thumb)) card.querySelector(".tc-cover").innerHTML = `<img src="${esc(safe(m.thumb))}" alt="Carátula de ${esc(t.title || m.title || "la canción")}" loading="lazy">`;
-        if (!t.title && m.title) { card.querySelector("h3").textContent = m.title; card.querySelectorAll(".tc-btn,.tc-go").forEach((b) => b.setAttribute("aria-label", "Reproducir: " + m.title)); }
+        if (!t.title && m.title) { card.querySelector("h3").textContent = m.title; card.querySelector(".tc-btn").setAttribute("aria-label", "Abrir en Spotify: " + m.title); card.querySelector(".tc-go").setAttribute("aria-label", "Reproducir fragmento: " + m.title); }
       });
     });
   }
@@ -316,14 +316,16 @@
     stopAll(i); setUI(card, true);
     const fail = () => { setUI(card, false); window.open(safe(t.spotify_url) || sp.url, "_blank", "noopener"); };
     loadSpApi().then((api) => {
-      if (!spHost) { spHost = document.createElement("div"); spHost.setAttribute("aria-hidden", "true"); spHost.style.cssText = "position:fixed;left:-9999px;top:0;width:300px;height:80px;overflow:hidden;opacity:0;pointer-events:none"; document.body.appendChild(spHost); }
+      if (!spHost) { spHost = document.createElement("div"); spHost.setAttribute("aria-hidden", "true"); spHost.style.cssText = "position:fixed;right:0;bottom:0;width:300px;height:80px;overflow:hidden;opacity:.01;pointer-events:none;z-index:-1"; document.body.appendChild(spHost); }
       const target = document.createElement("div"); spHost.appendChild(target);
       api.createController(target, { uri: sp.uri, width: 300, height: 80 }, (c) => {
         CTRL[i] = c;
         c.addListener("ready", () => c.play());
+        clearTimeout(c._w); c._w = setTimeout(() => { if (!cardOf(i)?.classList.contains("is-on") || !c._started) { setUI(cardOf(i), false); toast("El navegador no ha dejado reproducirlo aquí. Pulsa la carátula para escucharlo en Spotify."); } }, 6000);
         c.addListener("playback_update", (e) => {
           const d = e.data || {};
           if (d.isPaused && d.duration && d.position >= d.duration - 500) c.seek(0);   // terminó: vuelve al principio
+          if (!d.isPaused) c._started = true;
           setUI(cardOf(i), !d.isPaused);
         });
       });
@@ -331,7 +333,8 @@
   }
   $("#tgrid").addEventListener("click", (e) => {
     const card = e.target.closest(".tc"); if (!card) return;
-    if (e.target.closest(".tc-btn, .tc-go")) playTrack(card);
+    if (e.target.closest(".tc-go")) return playTrack(card);
+    if (e.target.closest(".tc-btn")) { const u = safe(TRK[+card.dataset.i]?.spotify_url); if (u) window.open(u, "_blank", "noopener"); }
   });
 
   /* ---------- vídeos ---------- */
