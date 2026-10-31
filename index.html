@@ -16,6 +16,10 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Alfa+Slab+One&family=Inter:wght@400;500;600&family=Lora:ital,wght@0,400;0,500;1,400&family=Oswald:wght@400;500;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/site.css?v=7">
+  <style>
+    /* Música: texto a la derecha y canciones a la izquierda (alterna derecha-izquierda-derecha…) */
+    @media (min-width:901px){ .split.rev{direction:rtl} .split.rev>*{direction:ltr} }
+  </style>
 </head>
 <body>
 <a class="skip" href="#main">Saltar al contenido</a>
@@ -69,7 +73,7 @@
 
   <!-- MÚSICA: 4 canciones + "ver toda la música" -->
   <section class="section strip dark flat" id="musica">
-    <div class="wrap split">
+    <div class="wrap split rev">
       <header class="side reveal">
         <h2>Música</h2><span class="rule"></span>
         <p class="blurb">Canciones que nacen de la vida, de lo que sentimos y de lo que nos rodea.</p>
