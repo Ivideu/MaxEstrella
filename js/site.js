@@ -324,9 +324,15 @@
         clearTimeout(c._w); c._w = setTimeout(() => { if (!cardOf(i)?.classList.contains("is-on") || !c._started) { setUI(cardOf(i), false); toast("El navegador no ha dejado reproducirlo aquí. Pulsa la carátula para escucharlo en Spotify."); } }, 6000);
         c.addListener("playback_update", (e) => {
           const d = e.data || {};
-          if (d.isPaused && d.duration && d.position >= d.duration - 500) c.seek(0);   // terminó: vuelve al principio
-          if (!d.isPaused) c._started = true;
-          setUI(cardOf(i), !d.isPaused);
+          clearTimeout(c._end);
+          const ended = d.isPaused || (d.duration && d.position >= d.duration - 400);
+          if (ended && d.duration && d.position >= d.duration - 400) { try { c.seek(0); } catch (x) {} }
+          if (!ended) {
+            c._started = true;
+            // Spotify avisa cada segundo mientras suena: si dejan de llegar avisos, el fragmento ha terminado
+            c._end = setTimeout(() => { try { c.pause(); c.seek(0); } catch (x) {} setUI(cardOf(i), false); }, 2500);
+          }
+          setUI(cardOf(i), !ended);
         });
       });
     }).catch(fail);
