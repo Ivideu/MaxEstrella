@@ -246,6 +246,7 @@
   const PLAYSVG = '<svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><path d="M8 5v14l11-7z" fill="currentColor"/></svg>';
   function renderTracks() {
     const g = $("#tgrid"), list = tAll ? TRK : TRK.slice(0, TPREV);
+    if (typeof stopAll === "function") stopAll();
     g.innerHTML = list.map((t, i) => {
       const sp = parseSpotify(t.spotify_url), name = t.title || (sp ? "Escuchar en Spotify" : t.title || "");
       return `<article class="tc reveal" data-i="${i}">
@@ -255,7 +256,6 @@
         <div class="tc-meta">
           <div class="tc-row"><h3>${esc(name)}</h3><button class="tc-go" type="button" aria-label="Reproducir: ${esc(name)}" ${sp ? "" : "disabled"}>${PLAYSVG}</button></div>
           <p>${t.description ? esc(t.description) : sp ? "Spotify" : "Próximamente"}</p>
-          <button class="tc-close" type="button">Cerrar reproductor</button>
         </div>
       </article>`;
     }).join("");
@@ -287,22 +287,50 @@
     spApi.catch(() => { spApi = null; });
     return spApi;
   }
-  function stopTrack() {
-    const c = $(".tc.playing"); if (!c) return;
-    c.classList.remove("playing"); c.querySelector(".tc-player")?.remove();
+  /* Reproductor de Spotify oculto: la tarjeta no cambia de tamaño; su botón hace play / pausa */
+  const PAUSESVG = '<svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><path d="M7 5h4v14H7zM13 5h4v14h-4z" fill="currentColor"/></svg>';
+  const CTRL = {};                       // índice de canción -> controlador de Spotify
+  let spHost = null;
+  function setUI(card, on) {
+    if (!card || !card.isConnected) return;
+    card.classList.toggle("is-on", on);
+    card.querySelectorAll(".tc-btn,.tc-go").forEach((b) => b.setAttribute("aria-pressed", on));
+    const go = card.querySelector(".tc-go"); if (go) go.innerHTML = on ? PAUSESVG : PLAYSVG;
+  }
+  const cardOf = (i) => $(`#tgrid .tc[data-i="${i}"]`);
+  function stopAll(except) {
+    Object.keys(CTRL).forEach((k) => {
+      if (String(k) === String(except)) return;
+      try { CTRL[k].pause(); } catch (e) {}
+      setUI(cardOf(k), false);
+    });
   }
   function playTrack(card) {
-    const sp = parseSpotify(TRK[+card.dataset.i]?.spotify_url); if (!sp || card.classList.contains("playing")) return;
-    stopTrack();
-    card.classList.add("playing");
-    const holder = document.createElement("div"); holder.className = "tc-player";
-    const target = document.createElement("div"); holder.appendChild(target); card.prepend(holder);
-    const fallback = () => { holder.innerHTML = `<iframe src="${esc(sp.embed)}" width="100%" height="${sp.height}" frameborder="0" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy" title="Reproductor de Spotify"></iframe>`; };
-    loadSpApi().then((api) => api.createController(target, { uri: sp.uri, width: "100%", height: sp.height }, (ctrl) => { ctrl.addListener("ready", () => ctrl.play()); })).catch(fallback);
+    const i = card.dataset.i, t = TRK[+i], sp = parseSpotify(t?.spotify_url); if (!sp) return;
+    if (CTRL[i]) {                                       // ya creado: alterna play / pausa
+      const on = card.classList.contains("is-on");
+      stopAll(i);
+      if (on) { CTRL[i].pause(); setUI(card, false); } else { CTRL[i].resume(); setUI(card, true); }
+      return;
+    }
+    stopAll(i); setUI(card, true);
+    const fail = () => { setUI(card, false); window.open(safe(t.spotify_url) || sp.url, "_blank", "noopener"); };
+    loadSpApi().then((api) => {
+      if (!spHost) { spHost = document.createElement("div"); spHost.setAttribute("aria-hidden", "true"); spHost.style.cssText = "position:fixed;left:-9999px;top:0;width:300px;height:80px;overflow:hidden;opacity:0;pointer-events:none"; document.body.appendChild(spHost); }
+      const target = document.createElement("div"); spHost.appendChild(target);
+      api.createController(target, { uri: sp.uri, width: 300, height: 80 }, (c) => {
+        CTRL[i] = c;
+        c.addListener("ready", () => c.play());
+        c.addListener("playback_update", (e) => {
+          const d = e.data || {};
+          if (d.isPaused && d.duration && d.position >= d.duration - 500) c.seek(0);   // terminó: vuelve al principio
+          setUI(cardOf(i), !d.isPaused);
+        });
+      });
+    }).catch(fail);
   }
   $("#tgrid").addEventListener("click", (e) => {
     const card = e.target.closest(".tc"); if (!card) return;
-    if (e.target.closest(".tc-close")) return stopTrack();
     if (e.target.closest(".tc-btn, .tc-go")) playTrack(card);
   });
 
