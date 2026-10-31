@@ -132,7 +132,7 @@
     v(v, i, n) {
       const p = parseVideo(v.url), t = esc(v.title || "Vídeo"), u = esc(safe(v.url));
       let cls = "wide", media, extra = "";
-      if (p.kind === "youtube") media = `<div class="cr-photo cr-video"><iframe src="https://www.youtube-nocookie.com/embed/${p.id}?autoplay=1&rel=0" title="${t}" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe></div>`;
+      if (p.kind === "youtube") media = `<div class="cr-photo cr-video"><iframe src="https://www.youtube-nocookie.com/embed/${p.id}?autoplay=1&rel=0&vq=hd1080&modestbranding=1&iv_load_policy=3" title="${t}" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe></div>`;
       else if (p.kind === "instagram") { cls = "tall"; media = `<div class="cr-photo cr-video ig"><iframe class="ig-embed" scrolling="no" src="https://www.instagram.com/reel/${p.id}/embed" title="${t}" allow="autoplay; encrypted-media; fullscreen" allowfullscreen></iframe></div>`; }
       else if (p.kind === "tiktok") { cls = "tall"; media = `<div class="cr-photo cr-video"><iframe src="https://www.tiktok.com/embed/v2/${p.id}" title="${t}" allow="autoplay; encrypted-media; fullscreen" allowfullscreen></iframe></div>`; }
       else if (p.kind === "mp4") media = `<div class="cr-photo free"><video src="${u}" controls autoplay playsinline></video></div>`;
@@ -312,7 +312,7 @@
   const VPAGE = 6;
   function vThumb(v, p) {
     if (v.poster_url && safe(v.poster_url)) return `<img src="${esc(safe(v.poster_url))}" alt="" loading="lazy">`;
-    if (p.kind === "youtube") return `<img src="https://i.ytimg.com/vi/${p.id}/hqdefault.jpg" alt="" loading="lazy">`;
+    if (p.kind === "youtube") return `<img src="https://i.ytimg.com/vi/${p.id}/maxresdefault.jpg" alt="" loading="lazy" onerror="this.onerror=null;this.src='https://i.ytimg.com/vi/${p.id}/hqdefault.jpg'">`;
     if (p.kind === "mp4") return `<video src="${esc(safe(v.url))}#t=0.8" preload="metadata" muted playsinline></video>`;
     return `<div class="vph">${PLAT[p.kind]}</div>`;
   }
@@ -337,8 +337,10 @@
     const b = $("#vhero"), v = VIDS[0];
     if (!v) { b.hidden = true; return; }
     const p = parseVideo(v.url);
-    const src = (v.poster_url && safe(v.poster_url)) || (p.kind === "youtube" ? `https://i.ytimg.com/vi/${p.id}/hqdefault.jpg` : "images/escenario.jpg");
+    const src = (v.poster_url && safe(v.poster_url)) || (p.kind === "youtube" ? `https://i.ytimg.com/vi/${p.id}/maxresdefault.jpg` : "images/escenario.jpg");
+    const fb = p.kind === "youtube" ? `https://i.ytimg.com/vi/${p.id}/hqdefault.jpg` : "";
     b.innerHTML = `<img src="${esc(src)}" alt="">`;
+    if (fb) b.firstChild.onerror = function () { this.onerror = null; this.src = fb; };
     b.setAttribute("aria-label", "Ver vídeo: " + (v.title || "destacado"));
   }
   $("#vhero").addEventListener("click", () => openCromo("v", 0));
