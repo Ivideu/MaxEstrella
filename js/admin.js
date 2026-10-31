@@ -1,484 +1,558 @@
 (function () {
-  const M = window.MAX;
-  const { esc, safeUrl: safe, parseVideo, parseSpotify, spotifyMeta } = M;
+  const M = window.MAX, { sb, live, esc, parseVideo, parseSpotify } = M;
   const $ = (s, r = document) => r.querySelector(s);
   const $$ = (s, r = document) => [...r.querySelectorAll(s)];
-  const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const app = $("#app");
 
-  /* ---------- utilidades ---------- */
-  function toast(msg) {
+  function toast(msg, bad) {
     const t = $("#toast");
-    t.textContent = msg; t.classList.add("show");
-    clearTimeout(toast.h); toast.h = setTimeout(() => t.classList.remove("show"), 3200);
+    t.textContent = msg; t.className = "toast show" + (bad ? " bad" : "");
+    clearTimeout(toast.h); toast.h = setTimeout(() => t.classList.remove("show"), 3800);
   }
-  const io = "IntersectionObserver" in window
-    ? new IntersectionObserver((en) => en.forEach((x) => { if (x.isIntersecting) { x.target.classList.add("in"); io.unobserve(x.target); } }), { threshold: 0.1, rootMargin: "0px 0px -40px 0px" })
-    : null;
-  function reveal(root = document) {
-    $$(".reveal:not(.in)", root).forEach((el, i) => {
-      if (!el.style.getPropertyValue("--i")) el.style.setProperty("--i", i % 6);
-      io ? io.observe(el) : el.classList.add("in");
-    });
-  }
-  const MONTHS = ["ENE", "FEB", "MAR", "ABR", "MAY", "JUN", "JUL", "AGO", "SEP", "OCT", "NOV", "DIC"];
-  const localToday = () => new Date(Date.now() - new Date().getTimezoneOffset() * 6e4).toISOString().slice(0, 10);
+  const fmt = (d) => (d ? d.split("-").reverse().join("/") : "");
+  const fmtTs = (iso) => new Date(iso).toLocaleString("es-ES", { dateStyle: "medium", timeStyle: "short" });
 
-  /* ---------- navegación ---------- */
-  const nav = $("#nav"), burger = $("#burger");
-  const onScroll = () => nav.classList.toggle("scrolled", scrollY > 30);
-  addEventListener("scroll", onScroll, { passive: true }); onScroll();
-  burger.addEventListener("click", () => {
-    const open = nav.classList.toggle("open");
-    burger.setAttribute("aria-expanded", open);
-    document.body.style.overflow = open ? "hidden" : "";
-  });
-  $("#menu").addEventListener("click", (e) => {
-    if (e.target.closest("a")) { nav.classList.remove("open"); burger.setAttribute("aria-expanded", false); document.body.style.overflow = ""; }
-  });
-  if (io) {
-    const links = $$("#menu a");
-    const so = new IntersectionObserver((en) => en.forEach((x) => {
-      if (x.isIntersecting) links.forEach((a) => a.setAttribute("aria-current", a.getAttribute("href") === "#" + x.target.id));
-    }), { rootMargin: "-45% 0px -50% 0px" });
-    $$("main section[id]").forEach((s) => so.observe(s));
+  /* ---------- sin Supabase: pantalla de puesta en marcha ---------- */
+  if (!live) {
+    app.innerHTML = `<div class="center"><div class="card wide">
+      <div class="brand">MAX <i>★</i> ESTRELLA</div>
+      <h1>Panel de administración</h1>
+      <p>El panel necesita conectarse a Supabase (la base de datos gratuita donde se guardan conciertos, música, fotos y vídeos). Todavía no está configurado:</p>
+      <ol>
+        <li>Crea un proyecto en <b>supabase.com</b>.</li>
+        <li>En <code>SQL Editor</code> pega y ejecuta el archivo <code>supabase/schema.sql</code>.</li>
+        <li>En <code>Authentication → Users</code> crea los usuarios de la banda (email y contraseña).</li>
+        <li>Copia la <code>Project URL</code> y la clave <code>anon</code> en <code>js/config.js</code>.</li>
+      </ol>
+      <p>Si ya lo hiciste y ves esto, comprueba la conexión a internet y que los dos datos estén bien pegados.</p>
+      <a class="btn" href="index.html">Volver a la web</a>
+    </div></div>`;
+    return;
   }
 
-  /* ---------- portada: movimiento casi imperceptible del fondo con el ratón ---------- */
-  const heroEl = $("#inicio"), heroBg = $(".hero-bg");
-  if (heroEl && heroBg && !reduce && matchMedia("(hover:hover)").matches) {
-    let tx = 0, ty = 0, cx = 0, cy = 0, raf = 0;
-    const tick = () => {
-      cx += (tx - cx) * 0.04; cy += (ty - cy) * 0.04;           // suaviza el movimiento
-      heroBg.style.setProperty("--mx", cx.toFixed(3));
-      heroBg.style.setProperty("--my", cy.toFixed(3));
-      raf = (Math.abs(tx - cx) > 0.002 || Math.abs(ty - cy) > 0.002) ? requestAnimationFrame(tick) : 0;
-    };
-    const go = () => { if (!raf) raf = requestAnimationFrame(tick); };
-    heroEl.addEventListener("mousemove", (e) => {
-      const r = heroEl.getBoundingClientRect();
-      tx = ((e.clientX - r.left) / r.width - 0.5) * 2;
-      ty = ((e.clientY - r.top) / r.height - 0.5) * 2;
-      go();
-    });
-    heroEl.addEventListener("mouseleave", () => { tx = 0; ty = 0; go(); });
+  /* ---------- subida de archivos ---------- */
+  async function resizeImage(file, max = 2000, q = 0.86) {
+    if (!file.type.startsWith("image/") || file.type === "image/gif") return file;
+    try {
+      const bmp = await createImageBitmap(file);
+      const s = Math.min(1, max / Math.max(bmp.width, bmp.height));
+      const c = document.createElement("canvas");
+      c.width = Math.round(bmp.width * s); c.height = Math.round(bmp.height * s);
+      c.getContext("2d").drawImage(bmp, 0, 0, c.width, c.height);
+      const blob = await new Promise((r) => c.toBlob(r, "image/jpeg", q));
+      return blob || file;
+    } catch (e) { return file; }
+  }
+  async function upload(blob, folder, ext) {
+    const name = `${folder}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+    const { error } = await sb.storage.from("media").upload(name, blob, { cacheControl: "31536000", contentType: blob.type || undefined });
+    if (error) throw error;
+    return sb.storage.from("media").getPublicUrl(name).data.publicUrl;
+  }
+  async function uploadImage(file, folder) {
+    const b = await resizeImage(file);
+    const ext = b.type === "image/jpeg" ? "jpg" : (file.name.split(".").pop() || "png").toLowerCase();
+    return upload(b, folder, ext);
+  }
+  async function removeStored(url) {
+    const m = (url || "").match(/\/storage\/v1\/object\/public\/media\/(.+)$/);
+    if (m) await sb.storage.from("media").remove([decodeURIComponent(m[1])]);
   }
 
-  /* ---------- ventanas + ficha tipo cromo (común a todo) ---------- */
-  const modal = $("#modal"), mbody = $("#modal-body");
-  const pad = (x) => String(x).padStart(2, "0");
-  const CUR = { k: null, i: 0 };
-  const LIST = { m: () => MEM, p: () => phView, v: () => VIDS, u: () => UP, e: () => PAST };
-  function closeAll() {
-    modal.hidden = true; mbody.innerHTML = ""; CUR.k = null;
-    if (!nav.classList.contains("open")) document.body.style.overflow = "";
-  }
-  function openModal(html) { mbody.innerHTML = html; modal.hidden = false; document.body.style.overflow = "hidden"; }
-  modal.addEventListener("click", (e) => {
-    if (e.target === modal || e.target === mbody || e.target.classList.contains("cromo-wrap") || e.target.closest(".modal-x")) return closeAll();
-    const b = e.target.closest("[data-cr]");
-    if (b && CUR.k) openCromo(CUR.k, CUR.i + Number(b.dataset.cr));
-  });
-  addEventListener("keydown", (e) => {
-    if (e.key === "Escape") closeAll();
-    if (!modal.hidden && CUR.k) {
-      if (e.key === "ArrowRight") openCromo(CUR.k, CUR.i + 1);
-      if (e.key === "ArrowLeft") openCromo(CUR.k, CUR.i - 1);
+  /* ---------- definición de secciones ---------- */
+  const ENT = {
+    events: {
+      label: "Conciertos", table: "events", order: [["date", false]], files: [],
+      fields: [
+        { k: "date", l: "Fecha", t: "date", req: 1 },
+        { k: "title", l: "Título", req: 1, ph: "Max Estrella en directo" },
+        { k: "venue", l: "Sala o lugar", ph: "Sala Fun House" },
+        { k: "city", l: "Ciudad y dirección", ph: "Madrid · C. Palafox, 8" },
+        { k: "ticket_url", l: "Enlace de entradas", t: "url", help: "Opcional. Si lo dejas vacío no aparece el botón." },
+        { k: "note", l: "Comentario (opcional)", t: "textarea", help: "Se muestra en la web debajo del concierto, también cuando ya haya pasado. Ej.: «Sala llena, gracias a todos»." }
+      ],
+      row: (r) => ({ t: r.title, s: `${fmt(r.date)} · ${[r.venue, r.city].filter(Boolean).join(" · ")}`, tag: r.date < new Date().toISOString().slice(0, 10) ? "pasado" : "" })
+    },
+    tracks: {
+      label: "Música", table: "tracks", order: [["sort", true], ["created_at", false]], files: [],
+      fields: [
+        { k: "spotify_url", l: "Enlace de Spotify", t: "spotify", req: 1, help: "Canción, álbum o lista. En Spotify: «···» → Compartir → Copiar enlace de la canción. La carátula y el nombre se cogen solos de Spotify." },
+        { k: "title", l: "Título (opcional)", ph: "Si lo dejas vacío se usa el nombre de Spotify" },
+        { k: "sort", l: "Orden (número pequeño = antes)", t: "number", def: 0 }
+      ],
+      row: (r) => ({ t: r.title || "Canción de Spotify", s: r.spotify_url, tag: parseSpotify(r.spotify_url) ? (parseSpotify(r.spotify_url).type === "track" ? "" : parseSpotify(r.spotify_url).type) : "enlace no válido" })
+    },
+    videos: {
+      label: "Vídeos", table: "videos", order: [["featured", false], ["created_at", false]], files: ["url", "poster_url"],
+      fields: [
+        { k: "url", l: "Enlace del vídeo", t: "video", req: 1 },
+        { k: "title", l: "Título", ph: "Directo en Fun House" },
+        { k: "poster_url", l: "Miniatura (opcional)", t: "image", folder: "posters", help: "YouTube y los MP4 generan su miniatura solos; para Instagram y TikTok es recomendable subir una." },
+        { k: "featured", l: "Destacado (aparece el primero y más grande)", t: "check" }
+      ],
+      row: (r) => ({ t: r.title || "(sin título)", s: r.url, img: r.poster_url || (parseVideo(r.url).kind === "youtube" ? `https://i.ytimg.com/vi/${parseVideo(r.url).id}/default.jpg` : ""), tag: r.featured ? "destacado" : "" })
+    },
+    photos: {
+      label: "Fotos", table: "photos", order: [["sort", true], ["created_at", false]], files: ["url"], grid: true,
+      fields: [
+        { k: "caption", l: "Pie de foto", ph: "Concierto en Fun House" },
+        { k: "category", l: "Categoría", ph: "Directos, Estudio, Banda…", help: "Las fotos con la misma categoría se pueden filtrar en la web." },
+        { k: "sort", l: "Orden (número pequeño = antes)", t: "number", def: 0 }
+      ]
+    },
+    members: {
+      label: "La banda", table: "members", order: [["sort", true]], files: ["photo_url"],
+      fields: [
+        { k: "name", l: "Nombre", req: 1 },
+        { k: "role", l: "Instrumento / papel", ph: "Voz y guitarra" },
+        { k: "bio", l: "Leyenda de la ficha", t: "textarea", help: "Frase corta que aparece en la tarjeta al pulsar su foto en la web." },
+        { k: "photo_url", l: "Foto", t: "image", folder: "members" },
+        { k: "sort", l: "Orden (número pequeño = antes)", t: "number", def: 0 }
+      ],
+      row: (r) => ({ t: r.name, s: r.role || "", img: r.photo_url })
     }
-  });
-  let tx = 0;
-  modal.addEventListener("touchstart", (e) => { tx = e.changedTouches[0].clientX; }, { passive: true });
-  modal.addEventListener("touchend", (e) => {
-    if (!CUR.k) return;
-    const dx = e.changedTouches[0].clientX - tx;
-    if (Math.abs(dx) > 60) openCromo(CUR.k, CUR.i + (dx < 0 ? 1 : -1));
-  });
-  function tilt(c, amt) {
-    if (reduce || !matchMedia("(hover:hover)").matches) return;
-    c.addEventListener("mousemove", (e) => {
-      const r = c.getBoundingClientRect(), x = (e.clientX - r.left) / r.width - 0.5, y = (e.clientY - r.top) / r.height - 0.5;
-      c.style.setProperty("--ry", (x * amt).toFixed(1) + "deg"); c.style.setProperty("--rx", (-y * amt).toFixed(1) + "deg");
-      c.style.setProperty("--sx", (130 - (x + 0.5) * 160).toFixed(0) + "%");
-    });
-    c.addEventListener("mouseleave", () => { c.style.setProperty("--ry", "0deg"); c.style.setProperty("--rx", "0deg"); });
-  }
-
-  const STAR = '<i class="cr-star">★</i>';
-  const frame = (top, media, cap) => `<div class="cr-top"><span>Max ★ Estrella</span><span>${top}</span></div>${media}<div class="cr-cap">${cap}</div>`;
-  const fmtDate = (iso) => new Date(iso).toLocaleDateString("es-ES", { day: "numeric", month: "long", year: "numeric" });
-  const cap1 = (s) => s.charAt(0).toUpperCase() + s.slice(1);
-
-  function fichaEvento(ev, i, n, past) {
-    const { y, m, d, wd } = evParts(ev), tk = past ? "" : safe(ev.ticket_url);
-    const rows = [["Sala", ev.venue], ["Ubicación", ev.city]].filter((r) => r[1]);
-    const media = `<div class="cr-date"><span class="wd">${esc(wd)}</span><b>${d}</b><span class="mo">${MONTHS[m - 1]} ${y}</span>${past ? '<em class="stamp">Finalizado</em>' : ""}</div>`;
-    const cap = `<h3>${esc(ev.title)}</h3>${past ? '<p class="cr-role">Concierto ya celebrado</p>' : ""}
-      ${rows.length ? `<ul class="cr-info">${rows.map((r) => `<li><small>${r[0]}</small><span>${esc(r[1])}</span></li>`).join("")}</ul>` : ""}
-      ${ev.note ? `<p class="cr-bio">${esc(ev.note)}</p>` : ""}
-      ${tk ? `<a class="btn sm" href="${esc(tk)}" target="_blank" rel="noopener">Comprar entradas</a>` : ""}`;
-    return { cls: "ficha" + (past ? " past" : ""), tilt: 12, html: frame(past ? "Directo · pasado" : "Directo · " + pad(i + 1) + "/" + pad(n), media, cap) };
-  }
-
-  const BUILD = {
-    m(m, i, n) {
-      return { cls: "", tilt: 16, html: frame(`Nº ${pad(i + 1)} / ${pad(n)}`,
-        `<div class="cr-photo"><img src="${esc(safe(m.photo_url) || "images/cartel.jpg")}" alt="${esc(m.name)}">${STAR}</div>`,
-        `<h3>${esc(m.name)}</h3>${m.role ? `<p class="cr-role">${esc(m.role)}</p>` : ""}${m.bio ? `<p class="cr-bio">${esc(m.bio)}</p>` : ""}`) };
-    },
-    p(p, i, n) {
-      return { cls: "foto", tilt: 10, html: frame(`Foto ${pad(i + 1)} / ${pad(n)}`,
-        `<div class="cr-photo free"><img src="${esc(safe(p.url))}" alt="${esc(p.caption || "Foto de Max Estrella")}">${STAR}</div>`,
-        `${p.caption ? `<h3>${esc(p.caption)}</h3>` : ""}${p.category ? `<p class="cr-role">${esc(p.category)}</p>` : ""}`) };
-    },
-    v(v, i, n) {
-      const p = parseVideo(v.url), t = esc(v.title || "Vídeo"), u = esc(safe(v.url));
-      let cls = "wide", media, extra = "";
-      if (p.kind === "youtube") media = `<div class="cr-photo cr-video"><iframe src="https://www.youtube-nocookie.com/embed/${p.id}?autoplay=1&rel=0&vq=hd1080&modestbranding=1&iv_load_policy=3" title="${t}" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe></div>`;
-      else if (p.kind === "instagram") { cls = "tall"; media = `<div class="cr-photo cr-video ig"><iframe class="ig-embed" scrolling="no" src="https://www.instagram.com/reel/${p.id}/embed" title="${t}" allow="autoplay; encrypted-media; fullscreen" allowfullscreen></iframe></div>`; }
-      else if (p.kind === "tiktok") { cls = "tall"; media = `<div class="cr-photo cr-video"><iframe src="https://www.tiktok.com/embed/v2/${p.id}" title="${t}" allow="autoplay; encrypted-media; fullscreen" allowfullscreen></iframe></div>`; }
-      else if (p.kind === "mp4") media = `<div class="cr-photo free"><video src="${u}" controls autoplay playsinline></video></div>`;
-      else {
-        media = `<div class="cr-photo cr-video">${vThumb(v, p)}${STAR}</div>`;
-        extra = p.kind === "link" && u ? `<a class="btn sm" href="${u}" target="_blank" rel="noopener">Abrir enlace</a>` : `<p class="cr-bio">Vídeo de ejemplo: añade el tuyo desde el panel de administración.</p>`;
-      }
-      return { cls, tilt: 6, html: frame(`Vídeo ${pad(i + 1)} / ${pad(n)}`, media, `<h3>${esc(v.title || "")}</h3><p class="cr-role">${PLAT[p.kind]}</p>${extra}`) };
-    },
-    u: (ev, i, n) => fichaEvento(ev, i, n, false),
-    e: (ev, i, n) => fichaEvento(ev, i, n, true)
   };
+  const SETTINGS = [
+    { k: "hero_tagline", l: "Frase de la portada" },
+    { k: "bio", l: "Texto de «La banda»", t: "textarea" },
+    { k: "contact_email", l: "Email de contacto", t: "email" },
+    { k: "instagram", l: "Instagram (enlace)", t: "url" },
+    { k: "youtube", l: "YouTube (enlace)", t: "url" },
+    { k: "tiktok", l: "TikTok (enlace)", t: "url" },
+    { k: "facebook", l: "Facebook (enlace)", t: "url" },
+    { k: "spotify", l: "Spotify (enlace)", t: "url" }
+  ];
+  const TABS = [["events", "Conciertos"], ["tracks", "Música"], ["videos", "Vídeos"], ["photos", "Fotos"], ["members", "La banda"], ["inquiries", "Mensajes"], ["settings", "Ajustes"]];
 
-  function openCromo(k, i) {
-    const L = LIST[k](); if (!L.length) return;
-    const idx = (i + L.length) % L.length;
-    CUR.k = k; CUR.i = idx;
-    const b = BUILD[k](L[idx], idx, L.length);
-    openModal(`<div class="cromo-wrap">
-      <div class="cromo ${b.cls}" id="cromo">${b.html}</div>
-      ${L.length > 1 ? `<div class="cr-nav"><button data-cr="-1" aria-label="Anterior">‹</button><span>${pad(idx + 1)} / ${pad(L.length)}</span><button data-cr="1" aria-label="Siguiente">›</button></div>` : ""}
-    </div>`);
-    igH = 0;
-    if ($("#cromo iframe")) $("#cromo").classList.add("nofx");
-    else tilt($("#cromo"), b.tilt);
-    fitCromo();
-  }
-
-  /* Los cromos verticales (Instagram, TikTok) se reducen para caber en la pantalla, sin barras de desplazamiento */
-  function fitCromo() {
-    const c = $("#cromo"); if (!c) return;
-    c.style.zoom = "";
-    if (!c.classList.contains("tall")) return;
-    const nv = $(".cr-nav", mbody);
-    const avail = innerHeight * 0.96 - 28 - 14 - (nv ? nv.offsetHeight + 20 : 0);
-    const h = c.offsetHeight;
-    if (h > avail) c.style.zoom = Math.max(0.45, avail / h).toFixed(3);
-  }
-  addEventListener("resize", fitCromo);
-
-  /* Instagram avisa de la altura real de su contenido: el iframe se ajusta y desaparece la barra interior */
-  let igH = 0;
-  addEventListener("message", (e) => {
-    if (e.origin !== "https://www.instagram.com") return;
-    let d = e.data;
-    if (typeof d === "string") { try { d = JSON.parse(d); } catch (_) { return; } }
-    if (!d || d.type !== "MEASURE" || !d.details || !d.details.height) return;
-    const f = $("iframe.ig-embed"), h = Math.ceil(d.details.height);
-    if (!f || f.contentWindow !== e.source || Math.abs(h - igH) < 3) return; // ignora avisos repetidos
-    igH = h; f.style.height = h + "px"; fitCromo();
-  });
-
-  /* ---------- conciertos ---------- */
-  function evParts(e) {
-    const [y, m, d] = e.date.split("-").map(Number);
-    return { y, m, d, wd: cap1(new Date(y, m - 1, d).toLocaleDateString("es-ES", { weekday: "long" })) };
-  }
-  function evHTML(e, past, i) {
-    const { y, m, d, wd } = evParts(e);
-    const place = [e.venue, e.city].filter(Boolean).join(" · ");
-    const tk = past ? "" : safe(e.ticket_url);
-    return `<li class="event${past ? " past" : ""} reveal" data-g="${past ? "e" : "u"}" data-i="${i}" role="button" tabindex="0" aria-label="Ver ficha: ${esc(e.title)}">
-      <div class="ev-date"><b>${d}</b><span>${MONTHS[m - 1]} ${y}</span></div>
-      <div class="ev-info"><small>${esc(wd)}</small><h3>${esc(e.title)}</h3><p>${esc(place)}</p>${e.note ? `<p class="ev-note">${esc(e.note)}</p>` : ""}</div>
-      <div class="ev-act">${tk ? `<a class="btn sm" href="${esc(tk)}" target="_blank" rel="noopener">Entradas</a>` : ""}${past ? '<span class="ev-stamp">Finalizado</span>' : ""}</div>
-    </li>`;
-  }
-  let UP = [], PAST = [], pastShown = 0;
-  function morePast() {
-    const s = PAST.slice(pastShown, pastShown + 4);
-    $("#past").insertAdjacentHTML("beforeend", s.map((e, k) => evHTML(e, true, pastShown + k)).join(""));
-    pastShown += s.length;
-    $("#past-more").hidden = pastShown >= PAST.length;
-    reveal($("#past"));
-  }
-  $("#past-more").addEventListener("click", morePast);
-  function evOpen(e) {
-    const li = e.target.closest("li.event");
-    if (!li || e.target.closest("a")) return;
-    openCromo(li.dataset.g, +li.dataset.i);
-  }
-  for (const id of ["#events", "#events-rest", "#past"]) {
-    $(id).addEventListener("click", evOpen);
-    $(id).addEventListener("keydown", (e) => {
-      if ((e.key === "Enter" || e.key === " ") && e.target.matches("li.event")) { e.preventDefault(); evOpen(e); }
-    });
-  }
-  function renderEvents(events) {
-    const today = localToday();
-    UP = events.filter((e) => e.date >= today).sort((a, b) => a.date.localeCompare(b.date));
-    PAST = events.filter((e) => e.date < today).sort((a, b) => b.date.localeCompare(a.date));
-    $("#events").innerHTML = UP.slice(0, 3).map((e, i) => evHTML(e, false, i)).join("");   // resumen: las 3 próximas
-    const rest = UP.slice(3);
-    $("#events-rest").innerHTML = rest.map((e, k) => evHTML(e, false, 3 + k)).join("");
-    $("#rest-wrap").hidden = !rest.length;
-    $("#ctoggle").hidden = !(rest.length || PAST.length);
-    $("#events-empty").hidden = UP.length > 0;
-    const ns = $("#next-show");
-    if (UP.length) {
-      const e = UP[0], { m, d } = evParts(e);
-      ns.innerHTML = `<b>Próximo directo</b> ${d} ${MONTHS[m - 1]} · ${esc(e.venue || e.title)} →`;
-      ns.hidden = false;
+  /* ---------- campos de formulario ---------- */
+  function fieldHTML(f, v) {
+    const id = "f_" + f.k, val = v ?? f.def ?? "";
+    const help = f.help ? `<small>${esc(f.help)}</small>` : "";
+    const req = f.req ? "required" : "";
+    switch (f.t) {
+      case "textarea":
+        return `<div class="field"><label for="${id}">${esc(f.l)}</label><textarea id="${id}" data-k="${f.k}" ${req}>${esc(val)}</textarea>${help}</div>`;
+      case "check":
+        return `<div class="field"><label class="chk"><input type="checkbox" data-k="${f.k}" ${val === true || val === "true" ? "checked" : ""}> ${esc(f.l)}</label>${help}</div>`;
+      case "image":
+        return `<div class="field"><label>${esc(f.l)}</label>
+          <div class="upl">${val ? `<img src="${esc(val)}" alt="" data-prev="${f.k}">` : `<img alt="" data-prev="${f.k}" hidden>`}
+            <div><input type="file" accept="image/*" data-up="${f.k}" data-folder="${f.folder || "misc"}"><div class="st" data-st="${f.k}"></div></div></div>
+          <input type="url" data-k="${f.k}" value="${esc(val)}" placeholder="…o pega aquí el enlace de una imagen">${help}</div>`;
+      case "spotify":
+        return `<div class="field"><label for="${id}">${esc(f.l)}</label>
+          <input type="url" id="${id}" data-k="${f.k}" value="${esc(val)}" placeholder="https://open.spotify.com/track/…" ${req}>
+          <small data-detsp="${f.k}"></small>${help}</div>`;
+      case "video":
+        return `<div class="field"><label for="${id}">${esc(f.l)}</label>
+          <input type="url" id="${id}" data-k="${f.k}" value="${esc(val)}" placeholder="Pega un enlace de YouTube, Instagram o TikTok" ${req}>
+          <small data-det="${f.k}"></small>
+          <div class="upl"><div><input type="file" accept="video/mp4,video/webm,video/quicktime" data-upvid="${f.k}"><div class="st" data-st="${f.k}">…o sube un archivo MP4 (máximo 50 MB en el plan gratuito).</div></div></div>${help}</div>`;
+      default:
+        return `<div class="field"><label for="${id}">${esc(f.l)}</label><input type="${f.t || "text"}" id="${id}" data-k="${f.k}" value="${esc(val)}" placeholder="${esc(f.ph || "")}" ${req}>${help}</div>`;
     }
-    pastShown = 0; $("#past").innerHTML = ""; morePast();
-    $("#past-wrap").hidden = !PAST.length;
+  }
+  function wireFields(form) {
+    const det = () => $$("[data-det]", form).forEach((s) => {
+      const inp = $(`[data-k="${s.dataset.det}"]`, form), p = parseVideo(inp.value);
+      const names = { youtube: "✔ Detectado: vídeo de YouTube", instagram: "✔ Detectado: reel/post de Instagram", tiktok: "✔ Detectado: vídeo de TikTok", mp4: "✔ Detectado: archivo de vídeo", link: "⚠ Enlace no reconocido: se abrirá en una pestaña nueva", demo: "" };
+      s.textContent = names[p.kind] || "";
+    });
+    $$("[data-det]", form).forEach((s) => $(`[data-k="${s.dataset.det}"]`, form).addEventListener("input", det)); det();
+    const detSp = () => $$("[data-detsp]", form).forEach((s) => {
+      const v = $(`[data-k="${s.dataset.detsp}"]`, form).value.trim(), p = parseSpotify(v);
+      const names = { track: "canción", album: "álbum", playlist: "lista", episode: "episodio", show: "podcast", artist: "artista" };
+      s.textContent = !v ? "" : p ? `✔ Detectado: ${names[p.type]} de Spotify` : "⚠ No parece un enlace de Spotify (debe empezar por https://open.spotify.com/…)";
+    });
+    $$("[data-detsp]", form).forEach((s) => $(`[data-k="${s.dataset.detsp}"]`, form).addEventListener("input", detSp)); detSp();
+    $$("[data-up]", form).forEach((inp) => inp.addEventListener("change", async () => {
+      const f = inp.files[0]; if (!f) return;
+      const st = $(`[data-st="${inp.dataset.up}"]`, form); st.textContent = "Subiendo…";
+      try {
+        const url = await uploadImage(f, inp.dataset.folder);
+        $(`[data-k="${inp.dataset.up}"]`, form).value = url;
+        const pv = $(`[data-prev="${inp.dataset.up}"]`, form); pv.src = url; pv.hidden = false;
+        st.textContent = "✔ Imagen subida";
+      } catch (e) { st.textContent = "Error: " + (e.message || e); toast("No se pudo subir la imagen", true); }
+    }));
+    $$("[data-upvid]", form).forEach((inp) => inp.addEventListener("change", async () => {
+      const f = inp.files[0]; if (!f) return;
+      const st = $(`[data-st="${inp.dataset.upvid}"]`, form);
+      if (f.size > 50 * 1024 * 1024) { st.textContent = "Ese archivo pesa más de 50 MB. Súbelo a YouTube y pega el enlace."; return; }
+      st.textContent = "Subiendo vídeo… (puede tardar)";
+      try {
+        const ext = (f.name.split(".").pop() || "mp4").toLowerCase();
+        const url = await upload(f, "videos", ext);
+        const t = $(`[data-k="${inp.dataset.upvid}"]`, form); t.value = url; t.dispatchEvent(new Event("input"));
+        st.textContent = "✔ Vídeo subido";
+      } catch (e) { st.textContent = "Error: " + (e.message || e); toast("No se pudo subir el vídeo", true); }
+    }));
+  }
+  function gather(form, fields) {
+    const o = {};
+    for (const f of fields) {
+      const el = $(`[data-k="${f.k}"]`, form); if (!el) continue;
+      if (f.t === "check") o[f.k] = el.checked;
+      else if (f.t === "number") o[f.k] = el.value === "" ? 0 : Number(el.value);
+      else { const v = el.value.trim(); o[f.k] = v === "" ? (f.req ? "" : null) : v; }
+    }
+    return o;
   }
 
-  /* ---------- música (Spotify) ---------- */
-  let TRK = [], spApi = null, tAll = false;
-  const TPREV = 4;                       // canciones que se ven en la franja resumen
-  const PLAYSVG = '<svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><path d="M8 5v14l11-7z" fill="currentColor"/></svg>';
-  function renderTracks() {
-    const g = $("#tgrid"), list = tAll ? TRK : TRK.slice(0, TPREV);
-    g.innerHTML = list.map((t, i) => {
-      const sp = parseSpotify(t.spotify_url), name = t.title || (sp ? "Escuchar en Spotify" : t.title || "");
-      return `<article class="tc reveal" data-i="${i}">
-        <button class="tc-btn" type="button" aria-label="Reproducir: ${esc(name)}" ${sp ? "" : "disabled"}>
-          <span class="tc-cover"><span class="tc-ph">★</span></span>
-        </button>
-        <div class="tc-meta">
-          <div class="tc-row"><h3>${esc(name)}</h3><button class="tc-go" type="button" aria-label="Reproducir: ${esc(name)}" ${sp ? "" : "disabled"}>${PLAYSVG}</button></div>
-          <p>${t.description ? esc(t.description) : sp ? "Spotify" : "Próximamente"}</p>
-          <button class="tc-close" type="button">Cerrar reproductor</button>
-        </div>
-      </article>`;
-    }).join("");
-    reveal(g);
-    // carátula y nombre oficiales desde Spotify
-    list.forEach((t, i) => {
-      if (!parseSpotify(t.spotify_url)) return;
-      spotifyMeta(t.spotify_url).then((m) => {
-        if (!m) return;
-        const card = g.querySelector(`.tc[data-i="${i}"]`); if (!card) return;
-        if (m.thumb && safe(m.thumb)) card.querySelector(".tc-cover").innerHTML = `<img src="${esc(safe(m.thumb))}" alt="Carátula de ${esc(t.title || m.title || "la canción")}" loading="lazy">`;
-        if (!t.title && m.title) { card.querySelector("h3").textContent = m.title; card.querySelectorAll(".tc-btn,.tc-go").forEach((b) => b.setAttribute("aria-label", "Reproducir: " + m.title)); }
-      });
+  /* ---------- sesión ---------- */
+  let user = null, tab = "events", main = null;
+  sb.auth.onAuthStateChange((ev, session) => {
+    const u = session?.user || null;
+    setTimeout(() => {
+      if (ev === "PASSWORD_RECOVERY") { user = u; return recoveryScreen(); }
+      if ((u && u.id) === (user && user.id) && app.innerHTML) return;
+      user = u; user ? dash() : login();
+    }, 0);
+  });
+  sb.auth.getSession().then(({ data }) => { if (!data.session && !app.innerHTML) login(); });
+
+  function login() {
+    app.innerHTML = `<div class="center"><form class="card" id="lf">
+      <div class="brand">MAX <i>★</i> ESTRELLA</div>
+      <h1>Acceso de la banda</h1><p>Entra con tu email y contraseña.</p>
+      <div class="field"><label for="le">Email</label><input type="email" id="le" required autocomplete="username"></div>
+      <div class="field" style="margin-top:14px"><label for="lp">Contraseña</label><input type="password" id="lp" required autocomplete="current-password"></div>
+      <p class="err" id="lerr"></p>
+      <div class="fbar"><button class="btn" type="submit">Entrar</button><button class="btn ghost" type="button" id="forgot">He olvidado la contraseña</button><a class="btn ghost" href="index.html">Volver a la web</a></div>
+    </form></div>`;
+    $("#lf").addEventListener("submit", async (e) => {
+      e.preventDefault(); $("#lerr").textContent = "";
+      const { error } = await sb.auth.signInWithPassword({ email: $("#le").value.trim(), password: $("#lp").value });
+      if (error) $("#lerr").textContent = error.message.includes("Invalid") ? "Email o contraseña incorrectos." : error.message;
+    });
+    $("#forgot").addEventListener("click", async () => {
+      const em = $("#le").value.trim();
+      if (!em) { $("#lerr").textContent = "Escribe primero tu email."; return; }
+      const { error } = await sb.auth.resetPasswordForEmail(em, { redirectTo: location.href.split("#")[0] });
+      $("#lerr").textContent = error ? error.message : "Te hemos enviado un email para crear una contraseña nueva.";
     });
   }
-  $("#tmore").addEventListener("click", (e) => {
-    tAll = !tAll; renderTracks();
-    e.currentTarget.innerHTML = (tAll ? "Ver menos" : "Ver toda la música") + ' <span aria-hidden="true">→</span>';
-  });
-  function loadSpApi() {
-    if (spApi) return spApi;
-    spApi = new Promise((res, rej) => {
-      window.onSpotifyIframeApiReady = (api) => res(api);
-      const sc = document.createElement("script"); sc.src = "https://open.spotify.com/embed/iframe-api/v1"; sc.async = true;
-      sc.onerror = () => rej(new Error("spotify api"));
-      document.head.appendChild(sc);
-      setTimeout(() => rej(new Error("timeout")), 6000);
+  function recoveryScreen() {
+    app.innerHTML = `<div class="center"><form class="card" id="rf"><div class="brand">MAX <i>★</i> ESTRELLA</div><h1>Nueva contraseña</h1>
+      <div class="field"><label for="np">Contraseña nueva (mínimo 8 caracteres)</label><input type="password" id="np" minlength="8" required autocomplete="new-password"></div>
+      <p class="err" id="rerr"></p><div class="fbar"><button class="btn" type="submit">Guardar y entrar</button></div></form></div>`;
+    $("#rf").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const { error } = await sb.auth.updateUser({ password: $("#np").value });
+      if (error) $("#rerr").textContent = error.message; else { toast("Contraseña actualizada"); dash(); }
     });
-    spApi.catch(() => { spApi = null; });
-    return spApi;
   }
-  function stopTrack() {
-    const c = $(".tc.playing"); if (!c) return;
-    c.classList.remove("playing"); c.querySelector(".tc-player")?.remove();
-  }
-  function playTrack(card) {
-    const sp = parseSpotify(TRK[+card.dataset.i]?.spotify_url); if (!sp || card.classList.contains("playing")) return;
-    stopTrack();
-    card.classList.add("playing");
-    const holder = document.createElement("div"); holder.className = "tc-player";
-    const target = document.createElement("div"); holder.appendChild(target); card.prepend(holder);
-    const fallback = () => { holder.innerHTML = `<iframe src="${esc(sp.embed)}" width="100%" height="${sp.height}" frameborder="0" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy" title="Reproductor de Spotify"></iframe>`; };
-    loadSpApi().then((api) => api.createController(target, { uri: sp.uri, width: "100%", height: sp.height }, (ctrl) => { ctrl.addListener("ready", () => ctrl.play()); })).catch(fallback);
-  }
-  $("#tgrid").addEventListener("click", (e) => {
-    const card = e.target.closest(".tc"); if (!card) return;
-    if (e.target.closest(".tc-close")) return stopTrack();
-    if (e.target.closest(".tc-btn, .tc-go")) playTrack(card);
-  });
 
-  /* ---------- vídeos ---------- */
-  const PLAT = { youtube: "YouTube", instagram: "Instagram", tiktok: "TikTok", mp4: "Vídeo", link: "Enlace", demo: "Próximamente" };
-  let VIDS = [], vShown = 0;
-  const VPAGE = 6;
-  function vThumb(v, p) {
-    if (v.poster_url && safe(v.poster_url)) return `<img src="${esc(safe(v.poster_url))}" alt="" loading="lazy">`;
-    if (p.kind === "youtube") return `<img src="https://i.ytimg.com/vi/${p.id}/maxresdefault.jpg" alt="" loading="lazy" onerror="this.onerror=null;this.src='https://i.ytimg.com/vi/${p.id}/hqdefault.jpg'">`;
-    if (p.kind === "mp4") return `<video src="${esc(safe(v.url))}#t=0.8" preload="metadata" muted playsinline></video>`;
-    return `<div class="vph">${PLAT[p.kind]}</div>`;
+  /* ---------- panel ---------- */
+  function dash() {
+    app.innerHTML = `<div class="shell">
+      <aside class="side"><div class="brand">MAX <i>★</i> ESTRELLA</div>
+        ${TABS.map(([k, l]) => `<button class="tab${k === tab ? " on" : ""}" data-tab="${k}">${l}${k === "inquiries" ? ' <span class="badge" id="qcount" hidden></span>' : ""}</button>`).join("")}
+        <div class="grow"></div>
+        <a class="view" href="index.html" target="_blank">Ver la web ↗</a>
+        <div class="who">${esc(user?.email || "")}</div>
+        <button class="tab" id="out">Salir</button>
+      </aside><section class="main" id="main"></section></div>`;
+    main = $("#main");
+    $$(".tab[data-tab]").forEach((b) => b.addEventListener("click", () => { tab = b.dataset.tab; $$(".tab[data-tab]").forEach((x) => x.classList.toggle("on", x === b)); route(); }));
+    $("#out").addEventListener("click", () => sb.auth.signOut());
+    refreshBadge();
+    route();
   }
-  function renderVideos() {
-    const g = $("#vgrid");
-    const slice = VIDS.slice(vShown, vShown + VPAGE);
-    g.insertAdjacentHTML("beforeend", slice.map((v, k) => {
-      const i = vShown + k, p = parseVideo(v.url);
-      return `<button class="cc vc reveal" data-i="${i}" aria-label="Ver vídeo: ${esc(v.title || "vídeo")}">
-        <div class="vt">${vThumb(v, p)}</div>
-        ${v.featured ? '<i class="cc-star" title="Destacado">★</i>' : ""}
-        <span class="mhint">Ver vídeo</span>
-        <span class="vplay"><svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true"><path d="M8 5v14l11-7z" fill="currentColor"/></svg></span>
-        <div class="cc-meta"><h3>${esc(v.title || "")}</h3><p class="cc-pill">${PLAT[p.kind]}</p></div>
-      </button>`;
-    }).join(""));
-    vShown += slice.length;
-    $("#vmore").hidden = vShown >= VIDS.length;
-    reveal(g);
+  function route() {
+    closeInq(true);
+    if (tab === "settings") return settingsView();
+    if (tab === "inquiries") return inquiriesView();
+    if (tab === "photos") return photosView();
+    return listView(tab);
   }
-  function renderVHero() {
-    const b = $("#vhero"), v = VIDS[0];
-    if (!v) { b.hidden = true; return; }
-    const p = parseVideo(v.url);
-    const src = (v.poster_url && safe(v.poster_url)) || (p.kind === "youtube" ? `https://i.ytimg.com/vi/${p.id}/maxresdefault.jpg` : "images/escenario.jpg");
-    const fb = p.kind === "youtube" ? `https://i.ytimg.com/vi/${p.id}/hqdefault.jpg` : "";
-    b.innerHTML = `<img src="${esc(src)}" alt="">`;
-    if (fb) b.firstChild.onerror = function () { this.onerror = null; this.src = fb; };
-    b.setAttribute("aria-label", "Ver vídeo: " + (v.title || "destacado"));
-  }
-  $("#vhero").addEventListener("click", () => openCromo("v", 0));
-  $("#vgrid").addEventListener("click", (e) => { const b = e.target.closest(".cc"); if (b) openCromo("v", +b.dataset.i); });
-  $("#vmore").addEventListener("click", renderVideos);
+  const fail = (e) => { console.error(e); toast("Error: " + (e.message || e), true); };
 
-  /* ---------- fotos ---------- */
-  let PH = [], phView = [], phShown = 0, phCat = "Todas";
-  const PPAGE = 12;
-  function renderChips() {
-    const cats = ["Todas", ...new Set(PH.map((p) => (p.category || "").trim()).filter(Boolean))];
-    const c = $("#chips");
-    c.hidden = cats.length < 3;
-    c.innerHTML = cats.map((k) => `<button class="chip${k === phCat ? " on" : ""}" data-c="${esc(k)}" role="tab" aria-selected="${k === phCat}">${esc(k)}</button>`).join("");
+  /* ---------- listado genérico ---------- */
+  async function listView(key) {
+    const E = ENT[key];
+    main.innerHTML = `<div class="top"><h2>${E.label}</h2><button class="btn" id="new">＋ Añadir</button></div><div id="l"><p class="empty">Cargando…</p></div>`;
+    $("#new").addEventListener("click", () => formView(key, null));
+    let q = sb.from(E.table).select("*"); E.order.forEach(([c, a]) => (q = q.order(c, { ascending: a })));
+    const { data, error } = await q; if (error) return fail(error);
+    const box = $("#l");
+    if (!data.length) { box.innerHTML = `<p class="empty">Aún no hay nada aquí. Pulsa «Añadir» para crear el primero.</p>`; return; }
+    box.className = "list";
+    box.innerHTML = data.map((r) => { const o = E.row(r); return `<div class="row">
+      ${o.img ? `<img class="thumb" src="${esc(o.img)}" alt="">` : `<div class="thumb ph">★</div>`}
+      <div><div class="t">${esc(o.t)}${o.tag ? ` <span class="tag ${o.tag === "borrador" ? "draft" : o.tag === "destacado" ? "star" : ""}">${esc(o.tag)}</span>` : ""}</div><div class="s">${esc(o.s || "")}</div></div>
+      <div class="acts"><button class="btn ghost sm" data-e="${r.id}">Editar</button><button class="btn danger sm" data-d="${r.id}">Borrar</button></div></div>`; }).join("");
+    const byId = Object.fromEntries(data.map((r) => [r.id, r]));
+    box.addEventListener("click", (ev) => {
+      const e = ev.target.closest("[data-e]"), d = ev.target.closest("[data-d]");
+      if (e) formView(key, byId[e.dataset.e]);
+      if (d) removeRow(key, byId[d.dataset.d]);
+    });
   }
-  function resetPhotos() {
-    phView = phCat === "Todas" ? PH : PH.filter((p) => (p.category || "").trim() === phCat);
-    phShown = 0; $("#masonry").innerHTML = ""; morePhotos();
+  async function removeRow(key, row) {
+    if (!confirm("¿Borrar definitivamente? Esta acción no se puede deshacer.")) return;
+    const E = ENT[key];
+    const { error } = await sb.from(E.table).delete().eq("id", row.id); if (error) return fail(error);
+    for (const c of E.files) await removeStored(row[c]).catch(() => {});
+    toast("Borrado"); route();
   }
-  function morePhotos() {
-    const slice = phView.slice(phShown, phShown + PPAGE);
-    $("#masonry").insertAdjacentHTML("beforeend", slice.map((p, k) => {
-      const meta = p.caption || p.category;
-      return `<button class="cc ph${meta ? "" : " nometa"} reveal" data-i="${phShown + k}" aria-label="Ver foto${p.caption ? ": " + esc(p.caption) : ""}">
-        <img src="${esc(safe(p.url))}" alt="${esc(p.caption || "Foto de Max Estrella")}" loading="lazy">
-        <span class="mhint">Ver foto</span>
-        ${meta ? `<div class="cc-meta">${p.caption ? `<h3>${esc(p.caption)}</h3>` : ""}${p.category ? `<p class="cc-pill">${esc(p.category)}</p>` : ""}</div>` : ""}
-      </button>`;
-    }).join(""));
-    phShown += slice.length;
-    $("#pmore").hidden = phShown >= phView.length;
-    reveal($("#masonry"));
-  }
-  function renderPrev() {
-    $("#pprev").innerHTML = PH.slice(0, 3).map((p, i) => `<button class="pv" data-i="${i}" aria-label="Ver foto${p.caption ? ": " + esc(p.caption) : ""}"><img src="${esc(safe(p.url))}" alt="${esc(p.caption || "Foto de Max Estrella")}" loading="lazy"></button>`).join("");
-  }
-  $("#pprev").addEventListener("click", (e) => {
-    const b = e.target.closest(".pv"); if (!b) return;
-    if (phView !== PH) { phCat = "Todas"; renderChips(); resetPhotos(); }   // el visor usa la lista completa
-    openCromo("p", +b.dataset.i);
-  });
-  $("#chips").addEventListener("click", (e) => {
-    const b = e.target.closest(".chip"); if (!b) return;
-    phCat = b.dataset.c; renderChips(); resetPhotos();
-  });
-  $("#pmore").addEventListener("click", morePhotos);
-  $("#masonry").addEventListener("click", (e) => { const b = e.target.closest(".cc"); if (b) openCromo("p", +b.dataset.i); });
-
-  /* ---------- banda ---------- */
-  let MEM = [];
-  function renderMembers(ms) {
-    MEM = ms;
-    $("#mgrid").innerHTML = ms.map((m, i) => `<button class="cc mc reveal" data-i="${i}" aria-label="Ver la ficha de ${esc(m.name)}"><img src="${esc(safe(m.photo_url) || "images/cartel.jpg")}" alt="${esc(m.name)}" loading="lazy"><span class="mhint">Ver ficha</span><div class="cc-meta"><h3>${esc(m.name)}</h3>${m.role ? `<p class="cc-pill">${esc(m.role)}</p>` : ""}</div></button>`).join("");
-  }
-  $("#mgrid").addEventListener("click", (e) => { const b = e.target.closest(".cc"); if (b) openCromo("m", +b.dataset.i); });
-
-  /* ---------- contacto / redes ---------- */
-  const ICON = {
-    instagram: '<rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.2" cy="6.8" r=".7" fill="currentColor"/>',
-    youtube: '<rect x="2.5" y="5.5" width="19" height="13" rx="4"/><path d="M10 9.4v5.2l4.4-2.6z" fill="currentColor"/>',
-    tiktok: '<path d="M14 3v11.2a3.6 3.6 0 1 1-3.6-3.6"/><path d="M14 3c.3 2.5 1.9 4.1 4.5 4.3"/>',
-    facebook: '<path d="M14.5 21v-8h2.6l.4-3h-3V8.1c0-.9.3-1.5 1.6-1.5h1.5V3.9c-.3 0-1.2-.1-2.2-.1-2.3 0-3.800 1.400-3.800 3.900V10H8.500v3h2.600v8z"/>',
-    spotify: '<circle cx="12" cy="12" r="9"/><path d="M7 9.6c3.6-1 7.200-.7 10.200 1.100M7.700 12.900c2.900-.8 5.700-.5 8.100 1M8.400 15.900c2.200-.6 4.300-.4 6.200.7"/>'
-  };
-  const SOCIAL = { instagram: "Instagram", youtube: "YouTube", tiktok: "TikTok", facebook: "Facebook", spotify: "Spotify" };
-  function renderSettings(S) {
-    if (S.hero_tagline) $("#tagline").textContent = S.hero_tagline;
-    $("#bio").textContent = S.bio || "";
-    const links = Object.keys(SOCIAL).filter((k) => safe(S[k])).map((k) => `<a href="${esc(safe(S[k]))}" target="_blank" rel="noopener">${SOCIAL[k]}</a>`).join("");
-    $("#social").innerHTML = links; $("#social-foot").innerHTML = links;
-    const icons = Object.keys(SOCIAL).filter((k) => safe(S[k])).map((k) => `<a href="${esc(safe(S[k]))}" target="_blank" rel="noopener" aria-label="${SOCIAL[k]}" title="${SOCIAL[k]}"><svg viewBox="0 0 24 24" aria-hidden="true">${ICON[k]}</svg></a>`).join("");
-    $("#social-nav").innerHTML = icons; $("#social-nav").hidden = !icons;
-    const mail = S.contact_email || M.config.CONTACT_EMAIL;
-    if (mail) { $("#direct-mail").hidden = false; const a = $("#mail-link"); a.textContent = mail; a.href = "mailto:" + mail; }
-    window.__mail = mail;
-  }
-  $("#booking").addEventListener("submit", async (e) => {
-    e.preventDefault();
-    const f = e.target, d = Object.fromEntries(new FormData(f)), msg = $("#form-msg"), btn = f.querySelector("button");
-    msg.className = "form-msg";
-    if (d.website) { msg.textContent = "¡Gracias!"; return; } // anti-spam
-    if (!d.name.trim() || !/^\S+@\S+\.\S+$/.test(d.email)) { msg.textContent = "Escribe tu nombre y un email válido."; msg.classList.add("err"); return; }
-    if (M.live) {
-      btn.disabled = true; msg.textContent = "Enviando…";
-      const { error } = await M.sb.from("inquiries").insert({ name: d.name, email: d.email, kind: d.kind, date_place: d.date_place, message: d.message });
+  function formView(key, row) {
+    const E = ENT[key];
+    main.innerHTML = `<div class="top"><h2>${row ? "Editar" : "Añadir"} · ${E.label}</h2></div>
+      <form class="form" id="f">${E.fields.map((f) => fieldHTML(f, row ? row[f.k] : undefined)).join("")}
+        <p class="err" id="ferr"></p>
+        <div class="fbar"><button class="btn" type="submit">Guardar</button><button class="btn ghost" type="button" id="cancel">Cancelar</button></div></form>`;
+    const form = $("#f"); wireFields(form);
+    $("#cancel").addEventListener("click", route);
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const o = gather(form, E.fields), miss = E.fields.find((f) => f.req && !o[f.k]);
+      if (miss) { $("#ferr").textContent = `Falta rellenar: ${miss.l}`; return; }
+      if (E.fields.some((f) => f.t === "spotify") && !parseSpotify(o.spotify_url)) { $("#ferr").textContent = "Ese enlace no es de Spotify. Copia el enlace de la canción desde Spotify (debe empezar por https://open.spotify.com/…)."; return; }
+      const btn = form.querySelector("button[type=submit]"); btn.disabled = true;
+      const res = row ? await sb.from(E.table).update(o).eq("id", row.id) : await sb.from(E.table).insert(o);
       btn.disabled = false;
-      if (error) { msg.textContent = "No se pudo enviar. Inténtalo de nuevo o escríbenos por email."; msg.classList.add("err"); return; }
-      msg.textContent = "¡Mensaje enviado! Te responderemos muy pronto."; msg.classList.add("ok"); f.reset();
-    } else {
-      const body = `Nombre: ${d.name}\nEmail: ${d.email}\nTipo: ${d.kind}\nFecha y lugar: ${d.date_place}\n\n${d.message}`;
-      location.href = `mailto:${window.__mail || ""}?subject=${encodeURIComponent("Contratación Max Estrella")}&body=${encodeURIComponent(body)}`;
-      msg.textContent = "Se abrirá tu correo con el mensaje listo (modo demo)."; msg.classList.add("ok");
+      if (res.error) return fail(res.error);
+      if (row) for (const c of E.files) if (row[c] && c in o && row[c] !== o[c]) await removeStored(row[c]).catch(() => {});
+      toast("Guardado ✔"); route();
+    });
+  }
+
+  /* ---------- fotos (subida múltiple) ---------- */
+  async function photosView() {
+    const E = ENT.photos;
+    main.innerHTML = `<div class="top"><h2>Fotos</h2></div>
+      <p class="hint">Arrastra aquí todas las fotos que quieras. Se reducen automáticamente a un tamaño ideal para la web (así no se llena el almacenamiento).</p>
+      <div class="drop" id="drop"><b>Arrastra fotos aquí</b> o
+        <div class="ctl"><input type="file" id="pf" accept="image/*" multiple>
+        <input type="text" id="pc" list="cats" placeholder="Categoría (opcional)"><datalist id="cats"></datalist>
+        <button class="btn" id="pgo">Subir fotos</button></div>
+        <div class="bar" id="pbar" hidden><i></i></div><p class="st" id="pst"></p></div>
+      <div id="pl"><p class="empty">Cargando…</p></div>`;
+    let files = [];
+    const drop = $("#drop");
+    ["dragover", "dragenter"].forEach((n) => drop.addEventListener(n, (e) => { e.preventDefault(); drop.classList.add("over"); }));
+    ["dragleave", "drop"].forEach((n) => drop.addEventListener(n, (e) => { e.preventDefault(); drop.classList.remove("over"); }));
+    drop.addEventListener("drop", (e) => { files = [...e.dataTransfer.files].filter((f) => f.type.startsWith("image/")); $("#pst").textContent = `${files.length} foto(s) listas. Pulsa «Subir fotos».`; });
+    $("#pf").addEventListener("change", (e) => { files = [...e.target.files]; $("#pst").textContent = `${files.length} foto(s) listas.`; });
+    $("#pgo").addEventListener("click", async () => {
+      if (!files.length) { $("#pst").textContent = "Elige primero alguna foto."; return; }
+      const cat = $("#pc").value.trim() || null, bar = $("#pbar"), fill = $("i", bar); bar.hidden = false; $("#pgo").disabled = true;
+      let ok = 0;
+      for (let i = 0; i < files.length; i++) {
+        $("#pst").textContent = `Subiendo ${i + 1} de ${files.length}…`;
+        try {
+          const url = await uploadImage(files[i], "photos");
+          const { error } = await sb.from("photos").insert({ url, category: cat, caption: null, sort: 0 });
+          if (error) throw error; ok++;
+        } catch (e) { console.error(e); toast(`Falló «${files[i].name}»`, true); }
+        fill.style.width = ((i + 1) / files.length) * 100 + "%";
+      }
+      $("#pgo").disabled = false; files = []; toast(`${ok} foto(s) subidas ✔`); photosView();
+    });
+    const { data, error } = await sb.from("photos").select("*").order("sort", { ascending: true }).order("created_at", { ascending: false });
+    if (error) return fail(error);
+    $("#cats").innerHTML = [...new Set(data.map((p) => p.category).filter(Boolean))].map((c) => `<option value="${esc(c)}">`).join("");
+    const pl = $("#pl");
+    if (!data.length) { pl.innerHTML = `<p class="empty">Todavía no hay fotos.</p>`; return; }
+    pl.className = "pgrid";
+    pl.innerHTML = data.map((p) => `<div class="pcell"><img src="${esc(p.url)}" alt="" loading="lazy"><div class="pi"><b>${esc(p.caption || "(sin pie)")}</b><span>${esc(p.category || "sin categoría")}</span></div>
+      <div class="acts"><button class="btn ghost sm" data-e="${p.id}">Editar</button><button class="btn danger sm" data-d="${p.id}">Borrar</button></div></div>`).join("");
+    const byId = Object.fromEntries(data.map((r) => [r.id, r]));
+    pl.addEventListener("click", (ev) => {
+      const e = ev.target.closest("[data-e]"), d = ev.target.closest("[data-d]");
+      if (e) formView("photos", byId[e.dataset.e]);
+      if (d) removeRow("photos", byId[d.dataset.d]);
+    });
+  }
+
+  /* ---------- ajustes ---------- */
+  async function settingsView() {
+    main.innerHTML = `<div class="top"><h2>Ajustes</h2></div><p class="hint">Textos y enlaces generales de la web.</p><p class="empty">Cargando…</p>`;
+    const { data, error } = await sb.from("settings").select("*"); if (error) return fail(error);
+    const S = Object.fromEntries(data.map((r) => [r.key, r.value]));
+    main.innerHTML = `<div class="top"><h2>Ajustes</h2></div><p class="hint">Textos y enlaces generales de la web. Deja vacío lo que no quieras mostrar (por ejemplo, una red social).</p>
+      <form class="form" id="sf">${SETTINGS.map((f) => fieldHTML(f, S[f.k] || "")).join("")}<p class="err" id="ferr"></p><div class="fbar"><button class="btn" type="submit">Guardar ajustes</button></div></form>`;
+    $("#sf").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const o = gather(e.target, SETTINGS);
+      const rows = SETTINGS.map((f) => ({ key: f.k, value: o[f.k] || "" }));
+      const { error: er } = await sb.from("settings").upsert(rows); if (er) return fail(er);
+      toast("Ajustes guardados ✔");
+    });
+  }
+
+  /* ---------- mensajes de contratación ---------- */
+  let INQ = [], VIEW = [], NAV = [], inqFilter = "all", curId = null, TPL = "";
+  const DRAFTS = {};
+  const isNew = (r) => r.read !== true;
+  const byId = (id) => INQ.find((r) => String(r.id) === String(id));
+  const FILTERS = [["all", "Todos"], ["new", "Sin leer"], ["replied", "Respondidos"]];
+  const inFilter = (r, k) => (k === "new" ? isNew(r) : k === "replied" ? !!r.replied_at : true);
+
+  async function refreshBadge() {
+    const { count, error } = await sb.from("inquiries").select("id", { count: "exact", head: true }).eq("read", false);
+    const q = $("#qcount"); if (!q || error) return;
+    q.textContent = count || ""; q.hidden = !count;
+  }
+
+  async function inquiriesView() {
+    closeInq(true);
+    main.innerHTML = `<div class="top"><h2>Mensajes</h2></div>
+      <p class="hint">Solicitudes enviadas desde el formulario de contratación. Pulsa un mensaje para leerlo en grande y responder por email desde aquí.</p>
+      <div class="mf" id="mf"></div><div id="l"><p class="empty">Cargando…</p></div>`;
+    const { data, error } = await sb.from("inquiries").select("*").order("created_at", { ascending: false });
+    if (error) return fail(error);
+    INQ = data || [];
+    $("#mf").addEventListener("click", (e) => { const b = e.target.closest("[data-f]"); if (b) { inqFilter = b.dataset.f; renderInq(); } });
+    $("#l").addEventListener("click", (e) => {
+      const d = e.target.closest("[data-d]"); if (d) return delInq(d.dataset.d);
+      const row = e.target.closest("[data-o]"); if (row) { NAV = VIEW.map((r) => r.id); openInq(row.dataset.o); }
+    });
+    $("#l").addEventListener("keydown", (e) => {
+      if ((e.key === "Enter" || e.key === " ") && e.target.matches(".row.msg")) { e.preventDefault(); NAV = VIEW.map((r) => r.id); openInq(e.target.dataset.o); }
+    });
+    renderInq(); refreshBadge();
+  }
+
+  function renderInq() {
+    const box = $("#l"), mf = $("#mf"); if (!box || !mf) return;
+    mf.innerHTML = FILTERS.map(([k, l]) => `<button class="mf-b${k === inqFilter ? " on" : ""}" data-f="${k}">${l} <span>${INQ.filter((r) => inFilter(r, k)).length}</span></button>`).join("");
+    VIEW = INQ.filter((r) => inFilter(r, inqFilter));
+    if (!INQ.length) { box.className = ""; box.innerHTML = `<p class="empty">No hay mensajes todavía.</p>`; return; }
+    if (!VIEW.length) { box.className = ""; box.innerHTML = `<p class="empty">No hay mensajes en este filtro.</p>`; return; }
+    box.className = "list";
+    box.innerHTML = VIEW.map((r) => `<div class="row msg${isNew(r) ? " unread" : ""}" data-o="${r.id}" tabindex="0" role="button" aria-label="Abrir mensaje de ${esc(r.name)}">
+      <div class="thumb ph">${isNew(r) ? "●" : "✉"}</div>
+      <div><div class="t">${esc(r.name)} <span class="tag">${esc(r.kind || "")}</span>${isNew(r) ? ' <span class="tag star">nuevo</span>' : ""}${r.replied_at ? ' <span class="tag">respondido</span>' : ""}</div>
+        <div class="s">${esc(fmtTs(r.created_at))} · ${esc(r.email)}${r.date_place ? " · " + esc(r.date_place) : ""}</div>
+        <div class="s pv">${esc(r.message || "")}</div></div>
+      <div class="acts"><button class="btn ghost sm" data-o="${r.id}">Abrir</button><button class="btn danger sm" data-d="${r.id}">Borrar</button></div></div>`).join("");
+  }
+
+  async function setRead(r, val) {
+    const { error } = await sb.from("inquiries").update({ read: val }).eq("id", r.id);
+    if (error) { fail(error); return false; }
+    r.read = val; renderInq(); refreshBadge(); return true;
+  }
+  async function loadReplies(id) {
+    const { data, error } = await sb.from("inquiry_replies").select("*").eq("inquiry_id", id).order("created_at", { ascending: true });
+    if (error) { console.error(error); return []; }   // si aún no se ejecutó el SQL, se puede leer igualmente
+    return data || [];
+  }
+  async function delInq(id) {
+    if (!confirm("¿Borrar este mensaje? Se borran también sus respuestas.")) return;
+    const { error } = await sb.from("inquiries").delete().eq("id", id); if (error) return fail(error);
+    INQ = INQ.filter((r) => String(r.id) !== String(id)); delete DRAFTS[id];
+    closeInq(true); renderInq(); refreshBadge(); toast("Borrado");
+  }
+
+  async function openInq(id) {
+    const r = byId(id); if (!r) return;
+    saveDraft();
+    curId = r.id;
+    if (isNew(r)) setRead(r, true);
+    const replies = await loadReplies(r.id);
+    if (curId !== r.id) return;
+    paintInq(r, replies);
+  }
+  function stepInq(d) {
+    if (NAV.length < 2) return;
+    const i = NAV.findIndex((x) => String(x) === String(curId));
+    openInq(NAV[(i + d + NAV.length) % NAV.length]);
+  }
+  function saveDraft() {
+    const ta = $("#rtext");
+    if (ta && curId != null) { const v = ta.value.trim(); if (v && v !== TPL.trim()) DRAFTS[curId] = ta.value; else delete DRAFTS[curId]; }
+  }
+  const dirty = () => { const ta = $("#rtext"); return !!ta && ta.value.trim() !== "" && ta.value.trim() !== TPL.trim(); };
+
+  function paintInq(r, replies) {
+    const i = Math.max(0, NAV.findIndex((x) => String(x) === String(r.id))), n = NAV.length || 1;
+    const first = (r.name || "").trim().split(/\s+/)[0] || "";
+    const greet = `Hola ${first},\n\n`;
+    TPL = `${greet}\n\nUn abrazo,\nMax Estrella`;
+    let host = $("#mm");
+    if (!host) {
+      host = document.createElement("div"); host.id = "mm"; host.className = "mm";
+      host.setAttribute("role", "dialog"); host.setAttribute("aria-modal", "true");
+      document.body.appendChild(host); document.body.style.overflow = "hidden";
+      host.addEventListener("click", (e) => {
+        if (e.target === host || e.target.classList.contains("mm-wrap") || e.target.closest(".mm-x")) return closeInq();
+        const nv = e.target.closest("[data-nav]"); if (nv) return stepInq(Number(nv.dataset.nav));
+        const cur = byId(curId); if (!cur) return;
+        if (e.target.closest("#rsend")) return sendReply(cur);
+        if (e.target.closest("#runread")) return markUnread(cur);
+        if (e.target.closest("#rdel")) return delInq(cur.id);
+      });
     }
+    const st = r.replied_at ? ["Respondido", "ok"] : isNew(r) ? ["Nuevo", "new"] : ["Leído", ""];
+    const info = [["Recibido", fmtTs(r.created_at)], ["Tipo de evento", r.kind], ["Fecha y lugar", r.date_place]].filter((x) => x[1]);
+    host.innerHTML = `<div class="mm-wrap">
+      <article class="mcard">
+        <header class="mc-top"><span>Max ★ Estrella</span><span class="mc-st ${st[1]}">${st[0]}</span></header>
+        <h3 class="mc-name">${esc(r.name)}</h3>
+        <a class="mc-mail" href="mailto:${esc(r.email)}">${esc(r.email)}</a>
+        <ul class="mc-info">${info.map((x) => `<li><small>${x[0]}</small><span>${esc(x[1])}</span></li>`).join("")}</ul>
+        <div class="mc-body">${esc(r.message || "(sin mensaje)")}</div>
+        ${replies.length ? `<div class="mc-thread"><p class="mc-h">Respuestas enviadas</p>${replies.map((x) => `<div class="mc-reply"><small>${esc(x.sent_by || "La banda")} · ${esc(fmtTs(x.created_at))}</small><p>${esc(x.body)}</p></div>`).join("")}</div>` : ""}
+        <div class="mc-compose">
+          <label for="rtext">${replies.length ? "Enviar otra respuesta" : "Tu respuesta"} <em>(le llegará por email a ${esc(r.email)})</em></label>
+          <textarea id="rtext" rows="8"></textarea>
+          <p class="mc-err" id="rerr" role="alert"></p>
+          <div class="mc-actions">
+            <button class="mbtn" id="rsend" type="button">Enviar respuesta por email</button>
+            <button class="mbtn ghost" id="runread" type="button">Marcar como no leído</button>
+            <button class="mbtn danger" id="rdel" type="button">Borrar</button>
+          </div>
+        </div>
+      </article>
+      ${n > 1 ? `<div class="mm-nav"><button data-nav="-1" aria-label="Mensaje anterior">‹</button><span>${i + 1} / ${n}</span><button data-nav="1" aria-label="Mensaje siguiente">›</button></div>` : ""}
+    </div><button class="mm-x" aria-label="Cerrar">×</button>`;
+    const ta = $("#rtext");
+    ta.value = DRAFTS[r.id] ?? TPL;
+    ta.setSelectionRange(greet.length, greet.length);
+    host.scrollTop = 0;
+  }
+
+  function closeInq(force) {
+    const host = $("#mm"); if (!host) return true;
+    if (!force && dirty() && !confirm("Tienes una respuesta sin enviar. ¿Descartarla?")) return false;
+    if (force) saveDraft(); else delete DRAFTS[curId];
+    host.remove(); document.body.style.overflow = ""; curId = null; return true;
+  }
+  addEventListener("keydown", (e) => {
+    if (!$("#mm")) return;
+    if (e.key === "Escape") closeInq();
+    else if ((e.key === "ArrowLeft" || e.key === "ArrowRight") && !e.target.matches("textarea,input")) stepInq(e.key === "ArrowRight" ? 1 : -1);
   });
-  $("#year").textContent = new Date().getFullYear();
 
-  /* ---------- botones "ver todo": despliegan la lista completa debajo de la franja ---------- */
-  function toggler(btn, panel, openTxt, closeTxt) {
-    const b = $(btn), p = $(panel);
-    b.addEventListener("click", () => {
-      const show = p.hidden; p.hidden = !show;
-      b.setAttribute("aria-expanded", show);
-      b.innerHTML = (show ? closeTxt : openTxt) + ' <span aria-hidden="true">→</span>';
-      if (show) { reveal(p); p.scrollIntoView({ behavior: reduce ? "auto" : "smooth", block: "nearest" }); }
-    });
-  }
-  toggler("#ctoggle", "#call", "Ver todos los conciertos", "Ocultar conciertos");
-  toggler("#vtoggle", "#vall", "Ver todos los vídeos", "Ocultar vídeos");
-  toggler("#gtoggle", "#gall", "Ver galería", "Ocultar galería");
-  toggler("#btoggle", "#ball", "Conoce a la banda", "Ocultar integrantes");
-
-  /* ---------- carga ---------- */
-  async function init() {
-    reveal();
-    const [events, tracks, videos, photos, members, S] = await Promise.all([M.get("events"), M.get("tracks"), M.get("videos"), M.get("photos"), M.get("members"), M.settings()]);
-    // cada bloque va por separado: si uno falla, los demás capítulos se siguen mostrando
-    const run = (name, fn) => { try { fn(); } catch (err) { console.error("Error en " + name, err); } };
-    run("ajustes", () => renderSettings(S));
-    run("conciertos", () => renderEvents(events));
-    run("música", () => {
-      TRK = tracks;
-      if (TRK.length) renderTracks(); else $("#tgrid").innerHTML = '<p class="empty">Muy pronto, música nueva.</p>';
-      const spUrl = S.spotify && safe(S.spotify);
-      $("#tmore").hidden = TRK.length <= TPREV;                 // más de 4 canciones: "Ver toda la música"
-      if (spUrl) { $("#spotify-link").href = spUrl; $("#spotify-more").hidden = TRK.length > TPREV; }
-    });
-    run("vídeos", () => {
-      VIDS = videos; vShown = 0; $("#vgrid").innerHTML = "";
-      if (VIDS.length) renderVideos(); else $("#vgrid").innerHTML = '<p class="empty">Muy pronto, vídeos nuevos.</p>';
-      renderVHero();
-    });
-    run("fotos", () => {
-      PH = photos; renderChips(); resetPhotos(); renderPrev();
-      if (!PH.length) $("#pprev").innerHTML = $("#masonry").innerHTML = '<p class="empty">Muy pronto, fotos nuevas.</p>';
-    });
-    run("banda", () => renderMembers(members));
-    reveal();
+  async function markUnread(r) {
+    if (!closeInq()) return;
+    if (await setRead(r, false)) toast("Marcado como no leído");
   }
 
-  init();
+  async function sendReply(r) {
+    const ta = $("#rtext"), err = $("#rerr"), btn = $("#rsend"), text = ta.value.trim();
+    err.textContent = "";
+    if (text.length < 5 || text === TPL.trim()) { err.textContent = "Escribe primero tu respuesta."; ta.focus(); return; }
+    if (!confirm(`Se enviará este email a ${r.email}. ¿Enviar ahora?`)) return;
+    btn.disabled = true; btn.textContent = "Enviando…";
+    try {
+      const { data, error } = await sb.functions.invoke("reply-inquiry", { body: { inquiry_id: r.id, message: text } });
+      if (error) {
+        let m = error.message || String(error);
+        try { const j = await error.context.json(); if (j && j.error) m = j.error; } catch (_) {}
+        if (/Failed to send|not found|404/i.test(m)) m += " (¿está desplegada la función «reply-inquiry»? Mira supabase/LEEME-mensajes.md)";
+        throw new Error(m);
+      }
+      if (data && data.error) throw new Error(data.error);
+      r.read = true; r.replied_at = new Date().toISOString(); delete DRAFTS[r.id];
+      toast("Respuesta enviada ✔"); renderInq(); refreshBadge();
+      paintInq(r, await loadReplies(r.id));
+    } catch (e) {
+      err.textContent = "No se pudo enviar: " + (e.message || e);
+      btn.disabled = false; btn.textContent = "Enviar respuesta por email";
+    }
+  }
 })();
