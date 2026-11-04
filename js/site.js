@@ -361,7 +361,6 @@
       const i = vShown + k, p = parseVideo(v.url);
       return `<button class="cc vc reveal" data-i="${i}" aria-label="Ver vídeo: ${esc(v.title || "vídeo")}">
         <div class="vt">${vThumb(v, p)}
-          ${v.featured ? '<i class="cc-star" title="Destacado">★</i>' : ""}
           <span class="mhint">Ver vídeo</span>
           <span class="vplay"><svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true"><path d="M8 5v14l11-7z" fill="currentColor"/></svg></span>
         </div>
@@ -372,17 +371,6 @@
     $("#vmore").hidden = vShown >= VIDS.length;
     reveal(g);
   }
-  function renderVHero() {
-    const b = $("#vhero"), v = VIDS[0];
-    if (!v) { b.hidden = true; return; }
-    const p = parseVideo(v.url);
-    const src = (v.poster_url && safe(v.poster_url)) || (p.kind === "youtube" ? `https://i.ytimg.com/vi/${p.id}/maxresdefault.jpg` : "images/escenario.jpg");
-    const fb = p.kind === "youtube" ? `https://i.ytimg.com/vi/${p.id}/hqdefault.jpg` : "";
-    b.innerHTML = `<img src="${esc(src)}" alt="">`;
-    if (fb) b.firstChild.onerror = function () { this.onerror = null; this.src = fb; };
-    b.setAttribute("aria-label", "Ver vídeo: " + (v.title || "destacado"));
-  }
-  $("#vhero").addEventListener("click", () => openCromo("v", 0));
   $("#vgrid").addEventListener("click", (e) => { const b = e.target.closest(".cc"); if (b) openCromo("v", +b.dataset.i); });
   $("#vmore").addEventListener("click", renderVideos);
 
@@ -507,9 +495,9 @@
       if (spUrl) { $("#spotify-link").href = spUrl; $("#spotify-more").hidden = TRK.length > TPREV; }
     });
     run("vídeos", () => {
-      VIDS = videos; vShown = 0; $("#vgrid").innerHTML = "";
+      VIDS = videos.slice().sort((a, b) => (a.sort || 0) - (b.sort || 0) || String(b.created_at || "").localeCompare(String(a.created_at || "")));
+      vShown = 0; $("#vgrid").innerHTML = "";
       if (VIDS.length) renderVideos(); else $("#vgrid").innerHTML = '<p class="empty">Muy pronto, vídeos nuevos.</p>';
-      renderVHero();
     });
     run("fotos", () => {
       PH = photos; renderChips(); resetPhotos(); renderPrev();

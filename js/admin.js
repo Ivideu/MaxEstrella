@@ -84,14 +84,14 @@
       row: (r) => ({ t: r.title || "Canción de Spotify", s: r.spotify_url, tag: parseSpotify(r.spotify_url) ? (parseSpotify(r.spotify_url).type === "track" ? "" : parseSpotify(r.spotify_url).type) : "enlace no válido" })
     },
     videos: {
-      label: "Vídeos", table: "videos", order: [["featured", false], ["created_at", false]], files: ["url", "poster_url"],
+      label: "Vídeos", table: "videos", order: [["sort", true], ["created_at", false]], files: ["url", "poster_url"],
       fields: [
         { k: "url", l: "Enlace del vídeo", t: "video", req: 1 },
         { k: "title", l: "Título (opcional)", ph: "Si lo dejas vacío se usa el título de YouTube", help: "En vídeos de YouTube el título se coge solo." },
         { k: "poster_url", l: "Miniatura (opcional)", t: "image", folder: "posters", help: "YouTube y los MP4 generan su miniatura solos; para Instagram y TikTok es recomendable subir una." },
-        { k: "featured", l: "Destacado (aparece el primero y más grande)", t: "check" }
+        { k: "sort", l: "Posición (número pequeño = antes)", t: "number", def: 0, help: "1 aparece el primero, 2 el segundo… Si dos vídeos tienen el mismo número, va antes el más reciente." }
       ],
-      row: (r) => ({ t: r.title || "(sin título)", s: r.url, img: r.poster_url || (parseVideo(r.url).kind === "youtube" ? `https://i.ytimg.com/vi/${parseVideo(r.url).id}/default.jpg` : ""), tag: r.featured ? "destacado" : "" })
+      row: (r) => ({ t: r.title || "(sin título)", s: r.url, img: r.poster_url || (parseVideo(r.url).kind === "youtube" ? `https://i.ytimg.com/vi/${parseVideo(r.url).id}/default.jpg` : ""), tag: "" })
     },
     photos: {
       label: "Fotos", table: "photos", order: [["sort", true], ["created_at", false]], files: ["url"], grid: true,

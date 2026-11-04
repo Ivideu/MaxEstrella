@@ -30,6 +30,8 @@
     .cc.vc h3{font-family:var(--cond);font-size:.92rem;font-weight:500;letter-spacing:.1em;line-height:1.3;text-transform:uppercase}
     .cc.vc .cc-pill{display:none}
     .cc.vc:hover .cc-meta,.cc.vc:focus-visible .cc-meta{background:var(--red2);border-color:var(--red2);color:#fff;transform:translateY(-2px)}
+    /* Vídeos: imagen fija del escenario (guitarra y ampli), sin blanco y negro para que no quede apagada */
+    .band-img.fixed img{object-position:22% 86%;filter:brightness(1.55) contrast(1.05) saturate(1.1)}
   </style>
 </head>
 <body>
@@ -115,7 +117,7 @@
   <!-- VÍDEOS (oscuro): imagen a pantalla completa a la izquierda, texto a la derecha -->
   <section class="section strip bleed dark flat deep" id="videos">
     <div class="band">
-      <button class="band-img" id="vhero" type="button" aria-label="Ver vídeo destacado"></button>
+      <div class="band-img static fixed"><img src="images/escenario.jpg" alt="" loading="lazy"></div>
       <div class="band-text">
         <h2>Vídeos</h2><span class="rule"></span>
         <p class="blurb">Imágenes que cuentan lo que somos. En el estudio, en directo, en la carretera… y en la vida.</p>
