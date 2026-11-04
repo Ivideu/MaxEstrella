@@ -279,10 +279,19 @@
     const box = $("#l");
     if (!data.length) { box.innerHTML = `<p class="empty">Aún no hay nada aquí. Pulsa «Añadir» para crear el primero.</p>`; return; }
     box.className = "list";
+    const hasPos = E.fields.some((f) => f.k === "sort");
     box.innerHTML = data.map((r) => { const o = E.row(r); return `<div class="row">
       ${o.img ? `<img class="thumb" src="${esc(o.img)}" alt="">` : `<div class="thumb ph">★</div>`}
       <div><div class="t">${esc(o.t)}${o.tag ? ` <span class="tag ${o.tag === "borrador" ? "draft" : o.tag === "destacado" ? "star" : ""}">${esc(o.tag)}</span>` : ""}</div><div class="s">${esc(o.s || "")}</div></div>
-      <div class="acts"><button class="btn ghost sm" data-e="${r.id}">Editar</button><button class="btn danger sm" data-d="${r.id}">Borrar</button></div></div>`; }).join("");
+      <div class="acts">${hasPos ? `<input type="number" class="pos-in" data-pos="${r.id}" value="${Number(r.sort) || 0}" min="0" step="1" title="Posición en la web (número pequeño = antes)" aria-label="Posición" style="width:68px;padding:8px 6px;text-align:center;background:transparent;color:inherit;border:1px solid rgba(255,255,255,.3);border-radius:4px;font:inherit">` : ""}<button class="btn ghost sm" data-e="${r.id}">Editar</button><button class="btn danger sm" data-d="${r.id}">Borrar</button></div></div>`; }).join("");
+    box.addEventListener("change", async (ev) => {      // casilla de posición: se guarda al salir de ella o con Intro
+      const inp = ev.target.closest("[data-pos]"); if (!inp) return;
+      const n = Math.max(0, Math.round(Number(inp.value) || 0));
+      const { error: er } = await sb.from(E.table).update({ sort: n }).eq("id", inp.dataset.pos);
+      if (er) return fail(er);
+      toast("Posición guardada ✔"); route();
+    });
+    box.addEventListener("keydown", (ev) => { if (ev.key === "Enter" && ev.target.matches("[data-pos]")) ev.target.blur(); });
     if (key === "tracks") fillSpotify(box, data);
     if (key === "videos") fillYoutube(box, data);
     const byId = Object.fromEntries(data.map((r) => [r.id, r]));
