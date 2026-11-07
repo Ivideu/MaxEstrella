@@ -1,0 +1,13 @@
+# Max Estrella
+
+> Max Estrella es una banda de rock de Madrid. Canciones que enamoran, canciones que emocionan. Rock en directo, música en Spotify, vídeos, fotos y contratación para salas, festivales y eventos privados.
+
+Max Estrella nace de la necesidad de contar lo que a veces no se dice: la soledad, la depresión que no avisa, el dolor que se convierte en canción.
+
+## Qué encontrarás en la web
+- [Música](https://maxestrellarock.com/#musica): canciones del grupo para escuchar en Spotify.
+- [Fotos](https://maxestrellarock.com/#fotos): galería de fotografías de la banda y de sus directos.
+- [Vídeos](https://maxestrellarock.com/#videos): vídeos de los conciertos y de la banda.
+- [Conciertos](https://maxestrellarock.com/#conciertos): próximas fechas, salas y entradas, y conciertos pasados.
+- [La banda](https://maxestrellarock.com/#banda): quiénes son y cómo suena Max Estrella.
+- [Contacto y contratación](https://maxestrellarock.com/#contacto): formulario para contratar al grupo.

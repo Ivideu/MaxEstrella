@@ -435,7 +435,7 @@
   const SOCIAL = { instagram: "Instagram", youtube: "YouTube", tiktok: "TikTok", facebook: "Facebook", spotify: "Spotify" };
   function renderSettings(S) {
     if (S.hero_tagline) $("#tagline").textContent = S.hero_tagline;
-    $("#bio").textContent = S.bio || "";
+    if (S.bio) $("#bio").textContent = S.bio;
     const links = Object.keys(SOCIAL).filter((k) => safe(S[k])).map((k) => `<a href="${esc(safe(S[k]))}" target="_blank" rel="noopener">${SOCIAL[k]}</a>`).join("");
     $("#social").innerHTML = links; $("#social-foot").innerHTML = links;
     const icons = Object.keys(SOCIAL).filter((k) => safe(S[k])).map((k) => `<a href="${esc(safe(S[k]))}" target="_blank" rel="noopener" aria-label="${SOCIAL[k]}" title="${SOCIAL[k]}"><svg viewBox="0 0 24 24" aria-hidden="true">${ICON[k]}</svg></a>`).join("");
@@ -479,6 +479,27 @@
   toggler("#gtoggle", "#gall", "Ver galería", "Ocultar galería");
   toggler("#btoggle", "#ball", "Conoce a la banda", "Ocultar integrantes");
 
+  /* ---------- SEO: datos estructurados (JSON-LD) con redes, canciones y próximos conciertos ---------- */
+  function seoData(S) {
+    const base = "https://maxestrellarock.com/", id = { "@id": base + "#banda" };
+    const same = Object.keys(SOCIAL).map((k) => safe(S[k])).filter(Boolean);
+    const group = { "@type": "MusicGroup", "@id": base + "#banda", name: "Max Estrella", url: base, genre: "Rock", image: base + "images/banda-hero.jpg", foundingLocation: { "@type": "Place", name: "Madrid, España" } };
+    if (same.length) group.sameAs = same;
+    const rec = TRK.filter((t) => t.title && safe(t.spotify_url)).map((t) => ({ "@type": "MusicRecording", name: t.title, url: safe(t.spotify_url), byArtist: id }));
+    if (rec.length) group.track = rec;
+    const evs = UP.map((e) => {
+      const o = { "@type": "MusicEvent", name: e.title, startDate: e.date, eventStatus: "https://schema.org/EventScheduled", eventAttendanceMode: "https://schema.org/OfflineEventAttendanceMode",
+        location: { "@type": "Place", name: e.venue || e.city || "Madrid", address: { "@type": "PostalAddress", addressLocality: e.city || "Madrid", addressCountry: "ES" } },
+        performer: id, organizer: id, image: [base + "images/banda-hero.jpg"] };
+      if (e.note) o.description = e.note;
+      if (safe(e.ticket_url)) o.offers = { "@type": "Offer", url: safe(e.ticket_url), availability: "https://schema.org/InStock" };
+      return o;
+    });
+    let el = $("#ld-dyn");
+    if (!el) { el = document.createElement("script"); el.type = "application/ld+json"; el.id = "ld-dyn"; document.head.appendChild(el); }
+    el.textContent = JSON.stringify({ "@context": "https://schema.org", "@graph": [group, ...evs] });
+  }
+
   /* ---------- carga ---------- */
   async function init() {
     reveal();
@@ -504,6 +525,7 @@
       if (!PH.length) $("#pprev").innerHTML = $("#masonry").innerHTML = '<p class="empty">Muy pronto, fotos nuevas.</p>';
     });
     run("banda", () => renderMembers(members));
+    run("seo", () => seoData(S));
     reveal();
   }
 

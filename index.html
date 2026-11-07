@@ -3,14 +3,25 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Max Estrella · Rock en directo desde Madrid</title>
-  <meta name="description" content="Max Estrella: rock en directo desde Madrid. Próximos conciertos, música, vídeos, fotos y contacto del grupo.">
+  <title>Max Estrella · Banda de rock en Madrid | Música, conciertos y vídeos</title>
+  <meta name="description" content="Max Estrella es una banda de rock de Madrid. Escucha su música en Spotify, mira sus vídeos y fotos, consulta los próximos conciertos y contrata al grupo.">
+  <meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1">
+  <link rel="canonical" href="https://maxestrellarock.com/">
   <meta name="theme-color" content="#0b0909">
-  <meta property="og:title" content="Max Estrella · Rock en directo">
-  <meta property="og:description" content="CANCIONES QUE ENAMORAN. Canciones que emocionan.">
-  <meta property="og:image" content="images/cartel.jpg">
+  <meta property="og:site_name" content="Max Estrella">
+  <meta property="og:locale" content="es_ES">
   <meta property="og:type" content="website">
+  <meta property="og:title" content="Max Estrella · Banda de rock en Madrid">
+  <meta property="og:description" content="Canciones que enamoran. Canciones que emocionan. Música, vídeos, fotos y conciertos de Max Estrella, rock en directo desde Madrid.">
+  <meta property="og:image" content="https://maxestrellarock.com/images/banda-hero.jpg">
+  <meta property="og:image:alt" content="Max Estrella, banda de rock de Madrid">
+  <meta property="og:url" content="https://maxestrellarock.com/">
   <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Max Estrella · Banda de rock en Madrid">
+  <meta name="twitter:description" content="Música, vídeos, fotos y conciertos de Max Estrella, rock en directo desde Madrid.">
+  <meta name="twitter:image" content="https://maxestrellarock.com/images/banda-hero.jpg">
+  <link rel="preload" as="image" href="images/banda-hero.jpg" fetchpriority="high">
+  <script type="application/ld+json">{"@context": "https://schema.org", "@graph": [{"@type": "WebSite", "@id": "https://maxestrellarock.com/#web", "url": "https://maxestrellarock.com/", "name": "Max Estrella", "inLanguage": "es", "publisher": {"@id": "https://maxestrellarock.com/#banda"}}, {"@type": "MusicGroup", "@id": "https://maxestrellarock.com/#banda", "name": "Max Estrella", "alternateName": "Max Estrella banda", "url": "https://maxestrellarock.com/", "genre": "Rock", "description": "Max Estrella es una banda de rock de Madrid: canciones que nacen de la vida, de lo que sentimos y de lo que nos rodea.", "image": "https://maxestrellarock.com/images/banda-hero.jpg", "foundingLocation": {"@type": "Place", "name": "Madrid, España"}}]}</script>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='18' fill='%230b0909'/><text x='50' y='72' font-size='64' text-anchor='middle' fill='%23c4283d'>★</text></svg>">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -117,7 +128,7 @@
   <!-- VÍDEOS (oscuro): imagen a pantalla completa a la izquierda, texto a la derecha -->
   <section class="section strip bleed dark flat deep" id="videos">
     <div class="band">
-      <div class="band-img static fixed"><img src="images/escenario.jpg" alt="" loading="lazy"></div>
+      <div class="band-img static fixed"><img src="images/escenario.jpg" alt="Escenario con guitarra, amplificador y micrófono: vídeos de Max Estrella" loading="lazy"></div>
       <div class="band-text">
         <h2>Vídeos</h2><span class="rule"></span>
         <p class="blurb">Imágenes que cuentan lo que somos. En el estudio, en directo, en la carretera… y en la vida.</p>
@@ -159,7 +170,7 @@
       <div class="band-img static"><img src="images/banda-hero.jpg" alt="Max Estrella, la banda" loading="lazy"></div>
       <div class="band-text">
         <h2>La banda</h2><span class="rule"></span>
-        <p class="bio" id="bio"></p>
+        <p class="bio" id="bio">Max Estrella nace de la necesidad de contar lo que a veces no se dice: la soledad, la depresión que no avisa, el dolor que se convierte en canción.</p>
         <button class="btn-line" id="btoggle" type="button" aria-expanded="false" aria-controls="ball">Conoce a la banda <span aria-hidden="true">→</span></button>
       </div>
     </div>
@@ -172,8 +183,8 @@
       <div class="reveal">
         <p class="eyebrow">Salas · festivales · eventos privados</p>
         <h2>contacto</h2>
-        <p class="lead">Llevemos el directo a tu sala, festival o fiesta. Escríbenos con los detalles de tu propuesta (fecha, ubicación y tipo de evento) y nos ponemos en contacto contigo lo antes posible.</p>
-        <p class="direct" id="direct-mail" hidden>Mientras tanto os dejamos nuestras redes sociales para que les eches un vistazo.</p>
+        <p class="lead">Cuéntanos qué tienes en mente (fecha, lugar y tipo de evento) y te respondemos lo antes posible.</p>
+        <p class="direct" id="direct-mail" hidden>O escríbenos directamente a <a id="mail-link" href="#"></a></p>
         <div class="social" id="social"></div>
       </div>
       <form class="form reveal" id="booking" novalidate>
